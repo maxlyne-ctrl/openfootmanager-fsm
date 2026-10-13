@@ -86,6 +86,7 @@ pub mod squad_safety;
 pub(crate) mod stable_hash;
 pub mod staff_rating;
 pub mod staff_tier;
+pub mod stadium;
 pub mod state;
 pub mod tactics_effects;
 pub mod tactics_lineup;

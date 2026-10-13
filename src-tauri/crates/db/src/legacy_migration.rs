@@ -161,6 +161,7 @@ fn migrate_single_save(
     player_identity::upgrade_loaded_player_identities(&mut game);
     ofm_core::football_identity::upgrade_game_football_identities(&mut game);
     game.promote_legacy_league();
+    ofm_core::stadium::backfill_stadium_layouts(&mut game.teams);
 
     save_manager.create_save(&game, &row.name)
 }
