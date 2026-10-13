@@ -1,0 +1,61 @@
+name: "prototype (Windows)"
+
+# A playable Windows build of this fork, for trying a branch out — not a
+# release. It is unsigned (Windows SmartScreen will warn on first run), it is
+# not published anywhere, and it skips the release workflow's verify gate and
+# signing environment, which a fork has no secrets for. The installer is
+# attached to the run as an artifact: Actions → this run → Artifacts.
+
+on:
+  push:
+    branches:
+      - quick-match-sim
+      - "prototype/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch makes the older build pointless.
+concurrency:
+  group: prototype-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: "npm"
+
+      # Same pin as rust-toolchain.toml and the release workflows.
+      - name: install Rust 1.95.0
+        uses: dtolnay/rust-toolchain@1.95.0
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: install frontend dependencies
+        run: npm ci
+
+      - name: build the installer
+        env:
+          # The in-app version label; "dev" keeps it from claiming to be a
+          # stable or nightly release.
+          OFM_CHANNEL: dev
+        run: npm run tauri build -- --bundles nsis
+
+      - name: attach the installer to the run
+        uses: actions/upload-artifact@v4
+        with:
+          name: openfoot-fsm-prototype-windows
+          path: src-tauri/target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+          retention-days: 14
