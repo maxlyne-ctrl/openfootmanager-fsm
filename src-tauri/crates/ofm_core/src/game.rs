@@ -179,6 +179,12 @@ pub struct Game {
     /// the season harness read it to check that it does.
     #[serde(skip)]
     pub squad_floor_top_ups: Vec<crate::squad_floor::SquadFloorTopUp>,
+    /// Which engine plays fixtures nobody is watching. Not saved: every game
+    /// starts on the quick resolver, the shipped behaviour. A tooling switch
+    /// for now (benchmarks, the season harness); a player-facing setting would
+    /// need persisting and a UI control.
+    #[serde(skip)]
+    pub unwatched_match_engine: crate::live_match_manager::UnwatchedMatchEngine,
 }
 
 impl Game {
@@ -226,6 +232,7 @@ impl Game {
             cash_journal: CashJournal::default(),
             cash_journal_dirty_ids: Vec::new(),
             squad_floor_top_ups: Vec::new(),
+            unwatched_match_engine: Default::default(),
         };
         game.promote_legacy_league();
         crate::football_identity::upgrade_game_football_identities(&mut game);

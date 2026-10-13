@@ -402,6 +402,7 @@ impl GamePersistenceReader {
             )?),
             cash_journal_dirty_ids: Vec::new(),
             squad_floor_top_ups: Vec::new(),
+            unwatched_match_engine: Default::default(),
         };
         game.promote_legacy_league();
         for competition in &mut game.competitions {
