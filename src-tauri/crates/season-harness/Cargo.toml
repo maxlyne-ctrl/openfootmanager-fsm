@@ -10,5 +10,10 @@ domain = { version = "0.3.0", path = "../domain" }
 chrono = { version = "0.4.44", default-features = false }
 serde_json = "1"
 
+[dev-dependencies]
+engine = { version = "0.3.0", path = "../engine" }
+rand = "0.10"
+rand_chacha = "0.10"
+
 [lints]
 workspace = true

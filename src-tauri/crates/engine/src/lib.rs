@@ -2,6 +2,7 @@ pub mod ai;
 pub mod engine;
 pub mod event;
 pub mod live_match;
+pub mod quick;
 pub mod rating;
 pub mod report;
 pub(crate) mod shared;
@@ -17,6 +18,7 @@ pub use live_match::{
     LiveMatchState, MatchCommand, MatchPhase, MatchSnapshot, MinuteResult, PenaltyShootoutSnapshot,
     SetPieceTakers, ShootoutOrderSnapshot, SubstitutionRecord,
 };
+pub use quick::{QuickFixture, QuickModel, simulate_quick};
 pub use report::{GoalDetail, GoalSource, MatchReport, PlayerMatchStats, TeamStats};
 pub use shared::role_has_match_effect;
 pub use types::{
