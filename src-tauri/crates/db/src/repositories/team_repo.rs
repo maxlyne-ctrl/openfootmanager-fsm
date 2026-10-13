@@ -31,6 +31,14 @@ pub fn upsert_team(conn: &Connection, t: &Team) -> Result<(), String> {
         .map_err(|_| GAME_PERSISTENCE_WRITE_ERROR.to_string())?;
     let tactics_phase_json = serde_json::to_string(&t.tactics_phase)
         .map_err(|_| GAME_PERSISTENCE_WRITE_ERROR.to_string())?;
+    // NULL, not "null", when there is no ground yet, so the column reads the
+    // same as a row written before it existed.
+    let stadium_layout_json = t
+        .stadium_layout
+        .as_ref()
+        .map(serde_json::to_string)
+        .transpose()
+        .map_err(|_| GAME_PERSISTENCE_WRITE_ERROR.to_string())?;
     let play_style_str = format!("{:?}", t.play_style);
     let kit_pattern_str = t.kit_pattern.to_string();
     let training_focus_str = format!("{:?}", t.training_focus);
@@ -45,8 +53,8 @@ pub fn upsert_team(conn: &Connection, t: &Team) -> Result<(), String> {
          training_focus, training_intensity, training_schedule,
          founded_year, colors_primary, colors_secondary,
          starting_xi_ids, match_roles, form, history, training_groups, financial_ledger, sponsorship, facilities, media_json, kit_pattern,
-         player_roles_json, tactics_phase_json)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35)",
+         player_roles_json, tactics_phase_json, stadium_layout_json)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28, ?29, ?30, ?31, ?32, ?33, ?34, ?35, ?36)",
         params![
             t.id,
             t.name,
@@ -83,6 +91,7 @@ pub fn upsert_team(conn: &Connection, t: &Team) -> Result<(), String> {
             kit_pattern_str,
             player_roles_json,
             tactics_phase_json,
+            stadium_layout_json,
         ],
     )
     .map_err(|_| GAME_PERSISTENCE_WRITE_ERROR.to_string())?;
@@ -152,6 +161,7 @@ fn row_to_team(row: &rusqlite::Row) -> rusqlite::Result<Team> {
     let kit_pattern_str: String = row.get::<_, String>(32)?;
     let player_roles_json: String = row.get(33).unwrap_or_else(|_| "{}".to_string());
     let tactics_phase_json: String = row.get(34).unwrap_or_else(|_| "{}".to_string());
+    let stadium_layout_json: String = row.get(35)?;
 
     Ok(Team {
         id: row.get(0)?,
@@ -162,6 +172,9 @@ fn row_to_team(row: &rusqlite::Row) -> rusqlite::Result<Team> {
         city: row.get(5)?,
         stadium_name: row.get(6)?,
         stadium_capacity: row.get(7)?,
+        // A layout that no longer parses is regenerated on load rather than
+        // failing the whole save.
+        stadium_layout: serde_json::from_str(&stadium_layout_json).unwrap_or_default(),
         finance: row.get(8)?,
         manager_id: row.get(9)?,
         reputation: row.get(10)?,
@@ -261,7 +274,8 @@ pub fn load_all_teams(conn: &Connection) -> Result<Vec<Team>, String> {
                     founded_year, colors_primary, colors_secondary,
                     starting_xi_ids, match_roles, form, history, training_groups, financial_ledger, sponsorship, facilities,
                     COALESCE(media_json, '{}'), COALESCE(kit_pattern, 'Solid'),
-                    COALESCE(player_roles_json, '{}'), COALESCE(tactics_phase_json, '{}')
+                    COALESCE(player_roles_json, '{}'), COALESCE(tactics_phase_json, '{}'),
+                    COALESCE(stadium_layout_json, 'null')
              FROM teams",
         )
         .map_err(|_| GAME_PERSISTENCE_LOAD_ERROR.to_string())?;
@@ -288,7 +302,8 @@ pub fn load_team(conn: &Connection, id: &str) -> Result<Option<Team>, String> {
                     founded_year, colors_primary, colors_secondary,
                     starting_xi_ids, match_roles, form, history, training_groups, financial_ledger, sponsorship, facilities,
                     COALESCE(media_json, '{}'), COALESCE(kit_pattern, 'Solid'),
-                    COALESCE(player_roles_json, '{}'), COALESCE(tactics_phase_json, '{}')
+                    COALESCE(player_roles_json, '{}'), COALESCE(tactics_phase_json, '{}'),
+                    COALESCE(stadium_layout_json, 'null')
              FROM teams WHERE id = ?1",
         )
         .map_err(|_| GAME_PERSISTENCE_LOAD_ERROR.to_string())?;
@@ -421,6 +436,72 @@ mod tests {
         assert_eq!(loaded.play_style, PlayStyle::Possession);
         assert_eq!(loaded.finance, 5_000_000);
         assert_eq!(loaded.stadium_capacity, 50000);
+    }
+
+    /// Given a team whose ground has been built, when it is saved and read
+    /// back through a fresh query, then the whole layout survives.
+    #[test]
+    fn a_teams_ground_layout_survives_a_save_and_load() {
+        use domain::stadium::{
+            Cladding, Corners, Floodlights, Pitch, PitchSurface, Rake, RoofSystem,
+            STADIUM_LAYOUT_VERSION, Section, StadiumLayout, StadiumSides, Stand, StandRoof, Tier,
+            TierKind,
+        };
+        let db = test_db();
+        let mut team = sample_team("team-ground", "Ground FC");
+        let stand = |name: &str, rows: u16| Stand {
+            name: name.into(),
+            bays: vec![Section {
+                tiers: vec![Tier {
+                    kind: TierKind::Terrace,
+                    rows,
+                }],
+                roof: StandRoof::Goalpost,
+                boxes: false,
+                rake: Rake::Steep,
+                balcony: true,
+            }],
+        };
+        let layout = StadiumLayout {
+            version: STADIUM_LAYOUT_VERSION,
+            bowl: true,
+            roof_system: RoofSystem::default(),
+            floodlights: Floodlights::Masts,
+            cladding: Cladding::Brick,
+            sides: StadiumSides {
+                north: stand("Main Stand", 11),
+                south: stand("Paddock", 12),
+                west: stand("Kop", 13),
+                east: stand("Canal End", 14),
+            },
+            corners: Corners::default(),
+            pitch: Pitch {
+                surface: PitchSurface::Hybrid,
+                undersoil_heating: true,
+                grow_lights: false,
+            },
+        };
+        team.stadium_layout = Some(layout.clone());
+
+        upsert_team(db.conn(), &team).unwrap();
+        let loaded = load_team(db.conn(), "team-ground").unwrap().unwrap();
+        let listed = load_all_teams(db.conn()).unwrap();
+
+        assert_eq!(loaded.stadium_layout, Some(layout.clone()));
+        assert_eq!(listed[0].stadium_layout, Some(layout));
+    }
+
+    /// Given a team row written before the ground column existed, when it is
+    /// read, then it has no layout.
+    #[test]
+    fn a_team_row_without_a_ground_reads_as_none() {
+        let db = test_db();
+        upsert_team(db.conn(), &sample_team("team-old", "Old FC")).unwrap();
+        db.conn()
+            .execute("UPDATE teams SET stadium_layout_json = NULL", [])
+            .unwrap();
+        let loaded = load_team(db.conn(), "team-old").unwrap().unwrap();
+        assert!(loaded.stadium_layout.is_none());
     }
 
     #[test]

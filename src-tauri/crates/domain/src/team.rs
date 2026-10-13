@@ -11,7 +11,13 @@ pub struct Team {
     pub football_nation: String,
     pub city: String,
     pub stadium_name: String,
+    /// Places at the ground. Still authoritative for gate money and the
+    /// match engine; `stadium_layout` is checked against it when generated.
     pub stadium_capacity: u32,
+    /// The ground as built, stand by stand. `None` in saves and worlds from
+    /// before grounds were modelled; the game generates one on load.
+    #[serde(default)]
+    pub stadium_layout: Option<crate::stadium::StadiumLayout>,
 
     // Current state
     /// Cash on hand, in integer euros. Equal to the sum of cash-journal posts
@@ -473,6 +479,7 @@ impl Team {
             city,
             stadium_name,
             stadium_capacity,
+            stadium_layout: None,
             finance: 1_000_000,
             manager_id: None,
             reputation: 500,
@@ -524,5 +531,32 @@ impl Team {
 fn clear_match_role_if_matches(role: &mut Option<String>, player_id: &str) {
     if role.as_deref() == Some(player_id) {
         *role = None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Given a team saved before grounds were modelled, when it is read, then
+    /// it loads with no layout rather than failing.
+    #[test]
+    fn a_team_saved_before_grounds_existed_loads_without_a_layout() {
+        let mut value = serde_json::to_value(Team::new(
+            "t".into(),
+            "T".into(),
+            "T".into(),
+            "GB".into(),
+            "Town".into(),
+            "Ground".into(),
+            5_000,
+        ))
+        .expect("serialises");
+        value
+            .as_object_mut()
+            .expect("object")
+            .remove("stadium_layout");
+        let team: Team = serde_json::from_value(value).expect("an old save still loads");
+        assert!(team.stadium_layout.is_none());
     }
 }

@@ -558,6 +558,10 @@ impl SaveManager {
             needs_resave = true;
         }
 
+        if ofm_core::stadium::backfill_stadium_layouts(&mut game.teams) {
+            needs_resave = true;
+        }
+
         if ofm_core::finances::backfill_opening_balances(&mut game) {
             needs_resave = true;
         }
@@ -3389,6 +3393,32 @@ mod tests {
 
         assert_eq!(league_count, 1);
         assert_eq!(fixture_count, 1);
+    }
+
+    /// Given a save written before grounds were modelled, when it is loaded,
+    /// then every club gets a ground, and loading again keeps the same one.
+    #[test]
+    fn load_game_builds_a_ground_for_clubs_saved_without_one() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut sm = SaveManager::init(&dir.path().join("saves")).unwrap();
+        let mut game = sample_game();
+        for team in &mut game.teams {
+            team.stadium_layout = None;
+        }
+        let save_id = sm.create_save(&game, "Before Grounds").unwrap();
+
+        let loaded = sm.load_game(&save_id).unwrap();
+        assert!(
+            loaded
+                .teams
+                .iter()
+                .all(|team| team.stadium_layout.is_some())
+        );
+        let again = sm.load_game(&save_id).unwrap();
+        assert_eq!(
+            again.teams[0].stadium_layout,
+            loaded.teams[0].stadium_layout
+        );
     }
 
     #[test]

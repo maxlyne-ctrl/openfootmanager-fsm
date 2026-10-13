@@ -236,6 +236,7 @@ impl Game {
         };
         game.promote_legacy_league();
         crate::football_identity::upgrade_game_football_identities(&mut game);
+        crate::stadium::backfill_stadium_layouts(&mut game.teams);
         crate::season_context::refresh_game_context(&mut game);
         game
     }
