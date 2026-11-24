@@ -20,7 +20,7 @@ use engine::{EventType, LiveMatchState, MatchConfig, PlayerData, Position, Side,
 use ofm_core::live_match_manager::match_side;
 use rand::{RngExt, SeedableRng};
 use rand_chacha::ChaCha12Rng;
-use season_harness::worlds::WorldSpec;
+use season_harness::worlds::{Scope, WorldSpec};
 use std::collections::HashMap;
 use std::fmt::Write as _;
 
@@ -71,6 +71,9 @@ fn main() {
         nations: Box::leak(list.into_boxed_slice()),
         user_nation: "ENG",
         start_year: 2033,
+        // Calibration plays every club's fixtures through the full engine.
+        scope: Scope::Everything,
+        package: None,
     };
     let game = spec.build().expect("world");
 

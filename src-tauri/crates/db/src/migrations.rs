@@ -1184,7 +1184,7 @@ mod tests {
     ("v065_player_league_stats.sql", 0x877d34d1535c0e66),
     ("v066_player_competition_stats.sql", 0x80ce31187d396eed),
     ("v067_player_season_stints.sql", 0xf1b727b06deb6941),
-    ("v068_team_stadium_layout.sql", 0x7e2e2c3a6f8fb3fe),
+    ("v068_team_stadium_layout.sql", 0xd1b517404cdc1d65),
     ];
 
     /// Given the migrations already shipped

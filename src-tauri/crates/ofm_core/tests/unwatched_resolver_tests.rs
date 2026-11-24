@@ -120,7 +120,8 @@ fn make_squad(team_id: &str) -> Vec<Player> {
     players
 }
 
-/// Two clubs meeting at home and away, and a third club the manager runs.
+/// Two clubs meeting at home and away, and a third club the manager runs, with
+/// the quick resolver chosen for fixtures nobody watches.
 fn make_game(manager_club: &str) -> Game {
     let clock = GameClock::new(Utc.with_ymd_and_hms(2025, 6, 15, 12, 0, 0).unwrap());
     let mut manager = Manager::new(
@@ -162,6 +163,7 @@ fn make_game(manager_club: &str) -> Game {
             .collect(),
         ..Default::default()
     });
+    game.unwatched_match_engine = UnwatchedMatchEngine::Quick;
     game
 }
 
@@ -211,6 +213,17 @@ fn the_players_own_fixture_always_gets_the_full_engine() {
 fn choosing_the_full_engine_plays_ai_fixtures_in_full() {
     let mut game = make_game("mine");
     game.unwatched_match_engine = UnwatchedMatchEngine::Full;
+    let played = live_match_manager::play_unwatched_fixture(&mut game, 0).expect("played");
+    assert!(played_in_full(&played.report));
+}
+
+/// Given a new game, when an AI fixture is played unwatched, then the full
+/// engine plays it: the quick resolver is opt-in until it is refitted to the
+/// current engine.
+#[test]
+fn a_new_game_plays_ai_fixtures_in_full() {
+    let mut game = make_game("mine");
+    game.unwatched_match_engine = UnwatchedMatchEngine::default();
     let played = live_match_manager::play_unwatched_fixture(&mut game, 0).expect("played");
     assert!(played_in_full(&played.report));
 }

@@ -133,9 +133,15 @@ pub enum UnwatchedMatchEngine {
     /// The statistical resolver ([`engine::simulate_quick`]): the same report,
     /// from a handful of draws instead of every minute. What keeps a deep
     /// pyramid and a long save fast.
-    #[default]
     Quick,
     /// The minute-by-minute engine, as for the player's own matches.
+    ///
+    /// The default until the quick resolver is refitted to the current engine:
+    /// its coefficients were fitted before morale and line familiarity reached
+    /// the match, and the readiness, form-trigger and watched-equals-unwatched
+    /// probes in `ofm_core/tests/` fail with it. Those probes passing with
+    /// `Quick` is the condition for making it the default again.
+    #[default]
     Full,
 }
 
@@ -1021,7 +1027,8 @@ fn create_live_match_with(
 /// The same selection every path uses, exposed for tools that drive the engine
 /// directly (calibration, benchmarks) without scheduling a fixture.
 pub fn match_side(game: &Game, team_id: &str) -> (engine::TeamData, Vec<engine::PlayerData>) {
-    build_team_with_bench(game, team_id)
+    let club = club_players_of(game, None, team_id);
+    build_team_with_bench_from(game, team_id, &club, None)
 }
 
 /// What a fixture nobody watched produced, with the two clubs it belongs to so

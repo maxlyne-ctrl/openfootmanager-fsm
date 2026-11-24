@@ -32,6 +32,9 @@ fn player(id: &str, position: Position, ovr: u8) -> PlayerData {
         aerial: ovr,
         traits: vec![],
         role: Default::default(),
+        injury_risk: 1.0,
+        line_familiarity: [1.0; 4],
+        morale_factor: 1.0,
     }
 }
 

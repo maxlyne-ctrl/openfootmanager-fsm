@@ -177,9 +177,9 @@ fn row_to_team(conn: &Connection, row: &rusqlite::Row) -> rusqlite::Result<Team>
         city: row.get(5)?,
         stadium_name: row.get(6)?,
         stadium_capacity: row.get(7)?,
-        // A layout that no longer parses is regenerated on load rather than
-        // failing the whole save.
-        stadium_layout: serde_json::from_str(&stadium_layout_json).unwrap_or_default(),
+        // A layout that no longer parses is quarantined and reads as none, so the load
+        // generates a fresh ground rather than failing the whole save.
+        stadium_layout: json_column::read(conn, cell("stadium_layout_json"), &stadium_layout_json),
         finance: row.get(8)?,
         manager_id: row.get(9)?,
         reputation: row.get(10)?,

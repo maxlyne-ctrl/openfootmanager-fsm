@@ -10,11 +10,12 @@
 //! and the builder unchanged.
 
 use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
 /// Version of the layout format. Bumped when a change needs a migration.
 pub const STADIUM_LAYOUT_VERSION: u32 = 1;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct StadiumLayout {
     #[serde(default = "default_version")]
@@ -41,7 +42,7 @@ fn default_version() -> u32 {
 
 /// The four sides of the ground. North and south run along the touchlines,
 /// west and east behind the goals.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 pub struct StadiumSides {
     pub north: Stand,
     pub south: Stand,
@@ -70,7 +71,7 @@ impl StadiumSides {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Side {
     North,
@@ -89,14 +90,14 @@ impl Side {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 pub struct Stand {
     pub name: String,
     /// Sections along the side, west to east or north to south. One to four.
     pub bays: Vec<Section>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Section {
     /// Lowest tier first. Empty means an open grass bank behind a rail.
@@ -114,13 +115,13 @@ pub struct Section {
     pub balcony: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
 pub struct Tier {
     pub kind: TierKind,
     pub rows: u16,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum TierKind {
     #[default]
@@ -130,7 +131,7 @@ pub enum TierKind {
     Terrace,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum StandRoof {
     #[default]
@@ -141,7 +142,7 @@ pub enum StandRoof {
     Cantilever,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Rake {
     Gentle,
@@ -150,7 +151,7 @@ pub enum Rake {
     Steep,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 pub struct RoofSystem {
     #[serde(rename = "type", default)]
     pub kind: RoofSystemKind,
@@ -160,7 +161,7 @@ pub struct RoofSystem {
     pub closed: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum RoofSystemKind {
     /// Each section has its own roof (or none).
@@ -172,7 +173,7 @@ pub enum RoofSystemKind {
     Arch,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Floodlights {
     None,
@@ -182,7 +183,7 @@ pub enum Floodlights {
     Roof,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Cladding {
     #[default]
@@ -193,7 +194,7 @@ pub enum Cladding {
     Lightup,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 pub struct Corners {
     #[serde(default)]
     pub nw: CornerFill,
@@ -216,7 +217,7 @@ impl Corners {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum Corner {
     Nw,
@@ -225,7 +226,7 @@ pub enum Corner {
     Se,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum CornerFill {
     #[default]
@@ -234,7 +235,7 @@ pub enum CornerFill {
     Seated,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 pub struct Pitch {
     #[serde(default)]
@@ -247,7 +248,7 @@ pub struct Pitch {
     pub grow_lights: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
 #[serde(rename_all = "lowercase")]
 pub enum PitchSurface {
     #[default]
