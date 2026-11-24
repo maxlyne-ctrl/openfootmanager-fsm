@@ -1,3 +1,5 @@
+import type { StadiumLayout } from "./generated/StadiumLayout";
+
 /** Attribute keys a training focus can improve, by natural position group. */
 export interface TrainingFocusAttributesData {
   focus: string;
@@ -148,6 +150,8 @@ export interface TeamData {
   city: string;
   stadium_name: string;
   stadium_capacity: number;
+  /** The ground stand by stand; absent in data written before grounds were modelled. */
+  stadium_layout?: StadiumLayout | null;
   finance: number;
   manager_id: string | null;
   reputation: number;

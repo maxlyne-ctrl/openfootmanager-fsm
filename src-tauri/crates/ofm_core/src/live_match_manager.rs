@@ -123,6 +123,29 @@ pub enum MatchMode {
 }
 
 // ---------------------------------------------------------------------------
+// UnwatchedMatchEngine — who plays the fixtures nobody watches
+// ---------------------------------------------------------------------------
+
+/// Which engine plays a fixture between two AI clubs. The player's own club is
+/// always played by the full engine, watched or delegated.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UnwatchedMatchEngine {
+    /// The statistical resolver ([`engine::simulate_quick`]): the same report,
+    /// from a handful of draws instead of every minute. What keeps a deep
+    /// pyramid and a long save fast.
+    Quick,
+    /// The minute-by-minute engine, as for the player's own matches.
+    ///
+    /// The default until the quick resolver is refitted to the current engine:
+    /// its coefficients were fitted before morale and line familiarity reached
+    /// the match, and the readiness, form-trigger and watched-equals-unwatched
+    /// probes in `ofm_core/tests/` fail with it. Those probes passing with
+    /// `Quick` is the condition for making it the default again.
+    #[default]
+    Full,
+}
+
+// ---------------------------------------------------------------------------
 // LiveMatchSession — wraps LiveMatchState + metadata for Tauri layer
 // ---------------------------------------------------------------------------
 
@@ -1000,6 +1023,14 @@ fn create_live_match_with(
     })
 }
 
+/// A club's match-day side as the engine sees it: the chosen XI and the bench.
+/// The same selection every path uses, exposed for tools that drive the engine
+/// directly (calibration, benchmarks) without scheduling a fixture.
+pub fn match_side(game: &Game, team_id: &str) -> (engine::TeamData, Vec<engine::PlayerData>) {
+    let club = club_players_of(game, None, team_id);
+    build_team_with_bench_from(game, team_id, &club, None)
+}
+
 /// What a fixture nobody watched produced, with the two clubs it belongs to so
 /// the caller can apply it without re-reading the fixture.
 #[derive(Debug)]
@@ -1042,6 +1073,11 @@ pub(crate) fn play_unwatched_fixture_with(
     lookups: Option<&mut MatchdayLookups>,
 ) -> Result<UnwatchedFixture, String> {
     let allows_extra_time = crate::matchday::fixture_allows_extra_time(game, fixture_index);
+    if game.unwatched_match_engine == UnwatchedMatchEngine::Quick
+        && !fixture_involves_users_club(game, fixture_index)
+    {
+        return play_quick_fixture(game, fixture_index, allows_extra_time, lookups);
+    }
     let mut session = kick_off_live_match_with(
         game,
         fixture_index,
@@ -1057,6 +1093,69 @@ pub(crate) fn play_unwatched_fixture_with(
         away_team_id: session.away_team_id.clone(),
         report: session.match_state.into_report(),
         league_round_context,
+    })
+}
+
+fn fixture_involves_users_club(game: &Game, fixture_index: usize) -> bool {
+    let Some(users_club) = game.manager.team_id.as_deref() else {
+        return false;
+    };
+    game.league
+        .as_ref()
+        .and_then(|league| league.fixtures.get(fixture_index))
+        .is_some_and(|fixture| {
+            fixture.home_team_id == users_club || fixture.away_team_id == users_club
+        })
+}
+
+/// The tuned numbers the quick resolver plays by, built once.
+fn quick_model() -> &'static engine::QuickModel {
+    static MODEL: std::sync::OnceLock<engine::QuickModel> = std::sync::OnceLock::new();
+    MODEL.get_or_init(engine::QuickModel::default)
+}
+
+/// [`play_unwatched_fixture`] for two AI clubs, by the quick resolver: the
+/// same kick-off gate, the same selection, the same per-fixture dice stream,
+/// and the same refusals as the full engine — only the match itself differs.
+fn play_quick_fixture(
+    game: &mut Game,
+    fixture_index: usize,
+    allows_extra_time: bool,
+    mut lookups: Option<&mut MatchdayLookups>,
+) -> Result<UnwatchedFixture, String> {
+    prepare_kick_off(game, fixture_index, lookups.as_deref_mut());
+    let lookups = lookups.as_deref();
+    let league = game.league.as_ref().ok_or(LIVE_MATCH_NO_LEAGUE_ERROR)?;
+    let fixture = league
+        .fixtures
+        .get(fixture_index)
+        .ok_or(LIVE_MATCH_FIXTURE_NOT_FOUND_ERROR)?;
+    if fixture.status != FixtureStatus::Scheduled {
+        return Err(LIVE_MATCH_FIXTURE_NOT_SCHEDULED_ERROR.to_string());
+    }
+    let home_team_id = fixture.home_team_id.clone();
+    let away_team_id = fixture.away_team_id.clone();
+    let home_club = club_players_of(game, lookups, &home_team_id);
+    let away_club = club_players_of(game, lookups, &away_team_id);
+    let (home, home_bench) = build_team_with_bench_from(game, &home_team_id, &home_club, lookups);
+    let (away, away_bench) = build_team_with_bench_from(game, &away_team_id, &away_club, lookups);
+    if home.players.is_empty() || away.players.is_empty() {
+        return Err(LIVE_MATCH_EMPTY_SQUAD_ERROR.to_string());
+    }
+    let mut rng = game.rng_today(&format!("match/{home_team_id}/{away_team_id}"));
+    let fixture = engine::QuickFixture {
+        home: &home,
+        away: &away,
+        home_bench: &home_bench,
+        away_bench: &away_bench,
+        allows_extra_time,
+    };
+    let report = engine::simulate_quick(&fixture, &MatchConfig::default(), quick_model(), &mut rng);
+    Ok(UnwatchedFixture {
+        report,
+        home_team_id,
+        away_team_id,
+        league_round_context: crate::matchday::user_league_round_context(game),
     })
 }
 

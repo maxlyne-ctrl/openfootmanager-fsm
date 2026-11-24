@@ -6,6 +6,7 @@ import type { MatchRoles } from "./MatchRoles";
 import type { PlayStyle } from "./PlayStyle";
 import type { PlayerRole } from "./PlayerRole";
 import type { Sponsorship } from "./Sponsorship";
+import type { StadiumLayout } from "./StadiumLayout";
 import type { TacticsPhaseSettings } from "./TacticsPhaseSettings";
 import type { TeamColors } from "./TeamColors";
 import type { TeamMedia } from "./TeamMedia";
@@ -15,7 +16,17 @@ import type { TrainingGroup } from "./TrainingGroup";
 import type { TrainingIntensity } from "./TrainingIntensity";
 import type { TrainingSchedule } from "./TrainingSchedule";
 
-export type Team = { id: string, name: string, short_name: string, country: string, football_nation: string, city: string, stadium_name: string, stadium_capacity: number, 
+export type Team = { id: string, name: string, short_name: string, country: string, football_nation: string, city: string, stadium_name: string, 
+/**
+ * Places at the ground. Still authoritative for gate money and the
+ * match engine; `stadium_layout` is checked against it when generated.
+ */
+stadium_capacity: number, 
+/**
+ * The ground as built, stand by stand. `None` in saves and worlds from
+ * before grounds were modelled; the game generates one on load.
+ */
+stadium_layout: StadiumLayout | null, 
 /**
  * Cash on hand, in integer euros. Equal to the sum of cash-journal posts
  * for this club once the journal has been seeded.
