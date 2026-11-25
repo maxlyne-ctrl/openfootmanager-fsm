@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "description": "Average revenue per club per season, in euros, by country and division (0 = top flight), with the share of it spent on wages. Divisions a country does not list fall back to reputationKnots. Figures marked estimate are not from a published report.",
+  "reputationKnots": [
+    [150, 60000],
+    [250, 400000],
+    [320, 1500000],
+    [420, 30000000],
+    [530, 42000000],
+    [640, 120000000],
+    [750, 350000000],
+    [900, 600000000]
+  ],
+  "leagues": [
+    {
+      "country": "ENG",
+      "divisions": [
+        { "revenue": 380000000, "wageRatio": 65, "source": "Premier League GBP 6.8bn / 20, Deloitte ARFF 2026" },
+        { "revenue": 47000000, "wageRatio": 96, "source": "Championship GBP 942m / 24, Deloitte ARFF 2026" },
+        { "revenue": 11000000, "wageRatio": 85, "source": "League One average GBP 9.4m, 2023/24, Swiss Ramble" },
+        { "revenue": 9000000, "wageRatio": 80, "source": "League Two average GBP 7.6m, 2023/24, Swiss Ramble" },
+        { "revenue": 4000000, "wageRatio": 80, "source": "National League, estimate" }
+      ]
+    },
+    {
+      "country": "DE",
+      "divisions": [
+        { "revenue": 222000000, "wageRatio": 55, "source": "Bundesliga over EUR 4bn / 18, Deloitte ARFF 2026" },
+        { "revenue": 45000000, "wageRatio": 60, "source": "2. Bundesliga, estimate" }
+      ]
+    },
+    {
+      "country": "ES",
+      "divisions": [
+        { "revenue": 205000000, "wageRatio": 60, "source": "LaLiga EUR 4.1bn / 20, Deloitte ARFF 2026" },
+        { "revenue": 25000000, "wageRatio": 70, "source": "LaLiga Hypermotion, estimate" }
+      ]
+    },
+    {
+      "country": "IT",
+      "divisions": [
+        { "revenue": 150000000, "wageRatio": 65, "source": "Serie A EUR 3.0bn / 20, Deloitte ARFF 2026" },
+        { "revenue": 20000000, "wageRatio": 75, "source": "Serie B, estimate" }
+      ]
+    },
+    {
+      "country": "FR",
+      "divisions": [
+        { "revenue": 122000000, "wageRatio": 70, "source": "Ligue 1 EUR 2.2bn / 18, Deloitte ARFF 2026" },
+        { "revenue": 18000000, "wageRatio": 75, "source": "Ligue 2, estimate" }
+      ]
+    },
+    {
+      "country": "BR",
+      "divisions": [
+        { "revenue": 90000000, "wageRatio": 60, "source": "Brasileirao Serie A, estimate" },
+        { "revenue": 12000000, "wageRatio": 70, "source": "Serie B, estimate" }
+      ]
+    },
+    {
+      "country": "NL",
+      "divisions": [
+        { "revenue": 42000000, "wageRatio": 55, "source": "Eredivisie about EUR 750m / 18, estimate" }
+      ]
+    },
+    {
+      "country": "PT",
+      "divisions": [
+        { "revenue": 39000000, "wageRatio": 55, "source": "Primeira Liga about EUR 700m / 18, estimate" }
+      ]
+    },
+    {
+      "country": "BE",
+      "divisions": [
+        { "revenue": 33000000, "wageRatio": 60, "source": "Pro League about EUR 520m / 16, estimate" }
+      ]
+    },
+    {
+      "country": "SCO",
+      "divisions": [
+        { "revenue": 32000000, "wageRatio": 55, "source": "Premiership EUR 378m / 12, UEFA ECFIL 2025" }
+      ]
+    },
+    {
+      "country": "AR",
+      "divisions": [
+        { "revenue": 15000000, "wageRatio": 65, "source": "Liga Profesional, estimate" }
+      ]
+    },
+    {
+      "country": "SE",
+      "divisions": [
+        { "revenue": 12000000, "wageRatio": 55, "source": "Allsvenskan, estimate" }
+      ]
+    },
+    {
+      "country": "HR",
+      "divisions": [
+        { "revenue": 8000000, "wageRatio": 55, "source": "HNL, estimate" }
+      ]
+    },
+    {
+      "country": "IE",
+      "divisions": [
+        { "revenue": 3000000, "wageRatio": 70, "source": "League of Ireland Premier Division, estimate" }
+      ]
+    },
+    {
+      "country": "NIR",
+      "divisions": [
+        { "revenue": 1500000, "wageRatio": 70, "source": "NIFL Premiership, estimate" }
+      ]
+    },
+    {
+      "country": "WAL",
+      "divisions": [
+        { "revenue": 1200000, "wageRatio": 70, "source": "Cymru Premier, estimate" }
+      ]
+    }
+  ]
+}
