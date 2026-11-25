@@ -186,7 +186,8 @@
     "digestEventUserNews": "Berita tentang klub atau para pemain",
     "digestEventTransferWindow": "Pembukaan jendela transfer atau hari batas akhir",
     "digestContinue": "Lanjutkan",
-    "digestError": "Kesalahan simulasi"
+    "digestError": "Kesalahan simulasi",
+    "ground": "Stadion"
   },
   "continueMenu": {
     "goToField": "Ke Lapangan",
@@ -4730,5 +4731,53 @@
     "body": "Sesi terakhirmu berakhir dengan crash. Melaporkannya membantu kami memperbaikinya — kamu akan melihat semua yang akan dikirim sebelum apa pun keluar dari komputermu.",
     "report": "Laporkan",
     "notNow": "Nanti saja"
+  },
+  "ground": {
+    "title": "Stadion",
+    "capacity": "Kapasitas",
+    "seats": "Kursi",
+    "standing": "Berdiri",
+    "executiveBoxes": "Boks eksekutif",
+    "underCover": "Beratap",
+    "restrictedView": "Pandangan terhalang",
+    "atmosphere": "Atmosfer",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Tribun",
+    "stand": "Tribun",
+    "sections": "Seksi",
+    "tiersRows": "Tingkat (baris)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Tanggul terbuka",
+    "roof": "Atap",
+    "roofMixed": "Campuran",
+    "roofKind": {
+      "none": "Tidak ada",
+      "posts": "Bertiang",
+      "goalpost": "Tipe portal",
+      "pitched": "Pelana",
+      "cantilever": "Kantilever"
+    },
+    "groundRoof": {
+      "ring": "Atap menaungi seluruh stadion",
+      "arch": "Atap lengkung menaungi seluruh stadion"
+    },
+    "retractable": "Dapat dibuka",
+    "tierKind": {
+      "seated": "Duduk",
+      "rail": "Kursi lipat",
+      "terrace": "Tribun berdiri"
+    },
+    "pitch": "Lapangan",
+    "surface": "Permukaan",
+    "surfaceKind": {
+      "natural": "Rumput alami",
+      "hybrid": "Rumput hibrida",
+      "artificial": "Sintetis"
+    },
+    "undersoilHeating": "Pemanas bawah lapangan",
+    "growLights": "Lampu pertumbuhan",
+    "installed": "Terpasang",
+    "notInstalled": "Tidak ada"
   }
 }

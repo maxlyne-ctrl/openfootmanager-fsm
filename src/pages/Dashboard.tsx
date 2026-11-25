@@ -72,6 +72,7 @@ const CLUB_TABS = new Set([
   "Scouting",
   "Youth",
   "Finances",
+  "Ground",
   "Transfers",
 ]);
 
@@ -84,6 +85,7 @@ const TAB_TRANSLATION_KEYS: Record<string, string> = {
   Training: "dashboard.training",
   Staff: "dashboard.staff",
   Finances: "dashboard.finances",
+  Ground: "dashboard.ground",
   Transfers: "dashboard.transfers",
   TransferCentre: "transfers.centre",
   Players: "dashboard.players",

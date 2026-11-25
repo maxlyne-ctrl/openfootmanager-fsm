@@ -186,7 +186,8 @@
     "digestEventUserNews": "Neuigkeiten über deinen Verein oder deine Spieler",
     "digestEventTransferWindow": "Öffnung oder Deadline des Transferfensters",
     "digestContinue": "Weitermachen",
-    "digestError": "Simulationsfehler"
+    "digestError": "Simulationsfehler",
+    "ground": "Stadion"
   },
   "continueMenu": {
     "goToField": "Aufs Spielfeld",
@@ -4730,5 +4731,53 @@
     "body": "Deine letzte Sitzung endete mit einem Absturz. Ihn zu melden hilft uns, ihn zu beheben — du siehst alles, was gesendet würde, bevor irgendetwas deinen Rechner verlässt.",
     "report": "Melden",
     "notNow": "Nicht jetzt"
+  },
+  "ground": {
+    "title": "Stadion",
+    "capacity": "Kapazität",
+    "seats": "Sitzplätze",
+    "standing": "Stehplätze",
+    "executiveBoxes": "Logen",
+    "underCover": "Überdacht",
+    "restrictedView": "Sichtbehinderung",
+    "atmosphere": "Stimmung",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Tribünen",
+    "stand": "Tribüne",
+    "sections": "Abschnitte",
+    "tiersRows": "Ränge (Reihen)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Offener Wall",
+    "roof": "Dach",
+    "roofMixed": "Gemischt",
+    "roofKind": {
+      "none": "Keins",
+      "posts": "Auf Stützen",
+      "goalpost": "Portaldach",
+      "pitched": "Satteldach",
+      "cantilever": "Freitragend"
+    },
+    "groundRoof": {
+      "ring": "Dach über das ganze Stadion",
+      "arch": "Bogendach über das ganze Stadion"
+    },
+    "retractable": "Ausfahrbar",
+    "tierKind": {
+      "seated": "Sitzplätze",
+      "rail": "Klappsitze",
+      "terrace": "Stehtraversen"
+    },
+    "pitch": "Spielfeld",
+    "surface": "Belag",
+    "surfaceKind": {
+      "natural": "Naturrasen",
+      "hybrid": "Hybridrasen",
+      "artificial": "Kunstrasen"
+    },
+    "undersoilHeating": "Rasenheizung",
+    "growLights": "Wachstumslampen",
+    "installed": "Vorhanden",
+    "notInstalled": "Keine"
   }
 }

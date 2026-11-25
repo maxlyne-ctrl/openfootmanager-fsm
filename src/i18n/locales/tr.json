@@ -186,7 +186,8 @@
     "digestEventUserNews": "Kulübünüz veya oyuncularınız hakkında haberler",
     "digestEventTransferWindow": "Transfer penceresinin açılışı veya kapanışı",
     "digestContinue": "İlerlemeye devam et",
-    "digestError": "Simülasyon hatası"
+    "digestError": "Simülasyon hatası",
+    "ground": "Stadyum"
   },
   "continueMenu": {
     "goToField": "Sahaya Çık",
@@ -4730,5 +4731,53 @@
     "body": "Son oturumun bir çökmeyle sona erdi. Bunu bildirmen düzeltmemize yardım eder — bilgisayarından herhangi bir şey çıkmadan önce gönderilecek her şeyi göreceksin.",
     "report": "Bildir",
     "notNow": "Şimdi değil"
+  },
+  "ground": {
+    "title": "Stadyum",
+    "capacity": "Kapasite",
+    "seats": "Oturma yeri",
+    "standing": "Ayakta",
+    "executiveBoxes": "Localar",
+    "underCover": "Kapalı",
+    "restrictedView": "Kısıtlı görüş",
+    "atmosphere": "Atmosfer",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Tribünler",
+    "stand": "Tribün",
+    "sections": "Bölümler",
+    "tiersRows": "Katlar (sıralar)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Açık set",
+    "roof": "Çatı",
+    "roofMixed": "Karma",
+    "roofKind": {
+      "none": "Yok",
+      "posts": "Direkler üzerinde",
+      "goalpost": "Portal tipi",
+      "pitched": "Beşik çatı",
+      "cantilever": "Konsol"
+    },
+    "groundRoof": {
+      "ring": "Tüm stadyumu örten çatı",
+      "arch": "Tüm stadyumu örten kemer çatı"
+    },
+    "retractable": "Açılır kapanır",
+    "tierKind": {
+      "seated": "Oturmalı",
+      "rail": "Katlanır koltuklar",
+      "terrace": "Ayakta tribün"
+    },
+    "pitch": "Saha",
+    "surface": "Zemin",
+    "surfaceKind": {
+      "natural": "Doğal çim",
+      "hybrid": "Hibrit çim",
+      "artificial": "Suni"
+    },
+    "undersoilHeating": "Zemin ısıtması",
+    "growLights": "Büyüme lambaları",
+    "installed": "Kurulu",
+    "notInstalled": "Yok"
   }
 }

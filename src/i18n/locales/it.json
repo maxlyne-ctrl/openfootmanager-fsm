@@ -186,7 +186,8 @@
     "digestEventUserNews": "Notizie sul tuo club o sui tuoi giocatori",
     "digestEventTransferWindow": "Apertura o chiusura della finestra di mercato",
     "digestContinue": "Continua ad avanzare",
-    "digestError": "Errore di simulazione"
+    "digestError": "Errore di simulazione",
+    "ground": "Stadio"
   },
   "continueMenu": {
     "goToField": "Vai in campo",
@@ -4730,5 +4731,53 @@
     "body": "La tua ultima sessione è terminata con un arresto anomalo. Segnalarlo ci aiuta a risolverlo: vedrai tutto ciò che verrebbe inviato prima che qualcosa lasci il tuo computer.",
     "report": "Segnala",
     "notNow": "Non ora"
+  },
+  "ground": {
+    "title": "Stadio",
+    "capacity": "Capienza",
+    "seats": "Posti a sedere",
+    "standing": "In piedi",
+    "executiveBoxes": "Palchi",
+    "underCover": "Coperto",
+    "restrictedView": "Visuale ridotta",
+    "atmosphere": "Atmosfera",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Tribune",
+    "stand": "Tribuna",
+    "sections": "Settori",
+    "tiersRows": "Anelli (file)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Terrapieno aperto",
+    "roof": "Copertura",
+    "roofMixed": "Mista",
+    "roofKind": {
+      "none": "Nessuna",
+      "posts": "Su pilastri",
+      "goalpost": "A portale",
+      "pitched": "A due falde",
+      "cantilever": "A sbalzo"
+    },
+    "groundRoof": {
+      "ring": "Copertura su tutto lo stadio",
+      "arch": "Copertura ad arco su tutto lo stadio"
+    },
+    "retractable": "Retrattile",
+    "tierKind": {
+      "seated": "Seduti",
+      "rail": "Seggiolini ribaltabili",
+      "terrace": "Gradinata in piedi"
+    },
+    "pitch": "Campo",
+    "surface": "Superficie",
+    "surfaceKind": {
+      "natural": "Erba naturale",
+      "hybrid": "Erba ibrida",
+      "artificial": "Sintetico"
+    },
+    "undersoilHeating": "Riscaldamento del terreno",
+    "growLights": "Lampade di crescita",
+    "installed": "Installato",
+    "notInstalled": "Nessuno"
   }
 }

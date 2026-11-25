@@ -31,7 +31,10 @@
     "common.ratingTier.A",
     "common.ratingTier.B",
     "playerProfile.contractSheet.lastSignedValue",
-    "playerProfile.contractSheet.range"
+    "playerProfile.contractSheet.range",
+    "ground.outOf100",
+    "ground.tier",
+    "ground.shareOfCapacity"
   ],
   "de": [
     "teamSelect.simulation",

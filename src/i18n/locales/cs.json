@@ -186,7 +186,8 @@
     "digestEventUserNews": "Novinky o vašem klubu nebo hráčích",
     "digestEventTransferWindow": "Otevření nebo uzávěrka přestupového okna",
     "digestContinue": "Pokračovat v postupu",
-    "digestError": "Chyba simulace"
+    "digestError": "Chyba simulace",
+    "ground": "Stadion"
   },
   "continueMenu": {
     "goToField": "Vstoupit na hřiště",
@@ -4730,5 +4731,53 @@
     "body": "Vaše poslední hraní skončilo pádem hry. Nahlášení nám pomůže chybu opravit — než cokoli opustí váš počítač, uvidíte vše, co by se odeslalo.",
     "report": "Nahlásit",
     "notNow": "Teď ne"
+  },
+  "ground": {
+    "title": "Stadion",
+    "capacity": "Kapacita",
+    "seats": "Místa k sezení",
+    "standing": "Stání",
+    "executiveBoxes": "Lóže",
+    "underCover": "Zastřešeno",
+    "restrictedView": "Omezený výhled",
+    "atmosphere": "Atmosféra",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Tribuny",
+    "stand": "Tribuna",
+    "sections": "Sektory",
+    "tiersRows": "Patra (řady)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Otevřený val",
+    "roof": "Střecha",
+    "roofMixed": "Smíšená",
+    "roofKind": {
+      "none": "Žádná",
+      "posts": "Na sloupech",
+      "goalpost": "Portálová",
+      "pitched": "Sedlová",
+      "cantilever": "Konzolová"
+    },
+    "groundRoof": {
+      "ring": "Střecha nad celým stadionem",
+      "arch": "Oblouková střecha nad celým stadionem"
+    },
+    "retractable": "Zatahovací",
+    "tierKind": {
+      "seated": "Sezení",
+      "rail": "Sklopná sedadla",
+      "terrace": "Stání na tribuně"
+    },
+    "pitch": "Hrací plocha",
+    "surface": "Povrch",
+    "surfaceKind": {
+      "natural": "Přírodní tráva",
+      "hybrid": "Hybridní tráva",
+      "artificial": "Umělý"
+    },
+    "undersoilHeating": "Vyhřívání trávníku",
+    "growLights": "Růstové lampy",
+    "installed": "Instalováno",
+    "notInstalled": "Žádné"
   }
 }
