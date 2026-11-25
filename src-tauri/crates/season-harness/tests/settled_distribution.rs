@@ -86,7 +86,13 @@ fn checkpoints_outside_the_band(worlds: &[Vec<(usize, DistributionReport)>]) -> 
 fn the_settled_world_stays_inside_its_band() {
     let mut worlds = Vec::new();
     for seed in SEEDS {
-        let mut game = WorldSpec::shipped(seed).build().expect("the world builds");
+        // The generator's settled targets, on the world as the generator makes it: the league
+        // economy re-rates every squad to its league's money on purpose.
+        let spec = WorldSpec {
+            economy: ofm_core::league_economy::EconomyModel::Legacy,
+            ..WorldSpec::shipped(seed)
+        };
+        let mut game = spec.build().expect("the world builds");
         eprintln!("seed {seed} opening: {:?}", distribution_report(&game));
         let mut log = DistributionLog::default();
         run_seasons(&mut game, RunOptions::seasons(20), &mut log).expect("the seasons play");
