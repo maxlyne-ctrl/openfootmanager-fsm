@@ -5,7 +5,7 @@ import type {
   LoanOfferData,
 } from "../../store/gameStore";
 
-export type TransferTabView = "my_list" | "players" | "offers";
+export type TransferTabView = "my_list" | "players" | "free_agents" | "offers";
 
 export interface TransferCollections {
   myTransferList: PlayerData[];

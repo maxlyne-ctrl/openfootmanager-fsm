@@ -42,6 +42,9 @@ const MARKET_QUERY: PlayersPageQuery = {
 // Each view of the centre is its own list with its own filters, asked of the same backend query.
 const VIEW_LISTS: Record<TransferTabView, Pick<PlayersPageQuery, "scope" | "status">> = {
   players: { scope: "market", status: "available" },
+  // The market's free agents, on a tab of their own: as a chip on the Players tab they were
+  // hard to find.
+  free_agents: { scope: "market", status: "free_agent" },
   my_list: { scope: "user_listed", status: "all" },
   offers: { scope: "with_offers", status: "all" },
 };
@@ -96,7 +99,8 @@ export function useTransferMarket({ gameState, userTeamId, t, myTeam }: Input) {
     [transferCollections],
   );
   const isPlayersView = view === "players";
-  const isScoutingView = isPlayersView;
+  // Both market views list players the club has to scout before it knows them.
+  const isScoutingView = isPlayersView || view === "free_agents";
   const { tabs } = getTransferNavigation({
     collections: transferCollections,
     myListedPlayers,

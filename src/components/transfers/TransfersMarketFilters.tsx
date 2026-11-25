@@ -21,6 +21,8 @@ type TransfersMarketFiltersProps = {
 
 const STATUS_OPTIONS: Record<TransferTabView, PlayerStatusFilter[]> = {
   players: ["available", "transfer", "loan", "free_agent"],
+  // Every player on this tab is a free agent; there is nothing to narrow to.
+  free_agents: [],
   // The club's own players all have a club.
   my_list: ["all", "transfer", "loan"],
   offers: ["all", "transfer", "loan", "free_agent"],
