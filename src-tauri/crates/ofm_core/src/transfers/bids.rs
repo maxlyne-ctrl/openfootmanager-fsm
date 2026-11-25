@@ -6,9 +6,27 @@
 
 use super::*;
 
-pub(crate) fn incoming_interest_score(
+/// What the old economy's generator valued a player of this rating and age at: his rating
+/// squared times 500, half again for the young and less for the old.
+fn old_scale_value(current_date: NaiveDate, player: &domain::player::Player) -> u64 {
+    let age = domain::age::playing_age(current_date, &player.date_of_birth);
+    let age_factor = match age {
+        0..=23 => 1.5,
+        24..=28 => 1.2,
+        29..=32 => 0.8,
+        _ => 0.4,
+    };
+    (f64::from(player.ovr).powi(2) * 500.0 * age_factor) as u64
+}
+
+/// How much buyers want `player` on `economy`. The score's value bands were drawn on the old
+/// scale, where nearly every player was worth over a million; on the league economy most are
+/// not, so the bands are read from what he would have been worth on the old scale (his rating
+/// squared times 500, by age), and the rule means what it always meant.
+pub(crate) fn incoming_interest_score_on(
     current_date: NaiveDate,
     player: &domain::player::Player,
+    economy: crate::league_economy::EconomyModel,
 ) -> i32 {
     let mut score = 0;
 
@@ -26,9 +44,13 @@ pub(crate) fn incoming_interest_score(
         }
     }
 
-    if player.market_value >= 1_000_000 {
+    let value = match economy {
+        crate::league_economy::EconomyModel::Legacy => player.market_value,
+        crate::league_economy::EconomyModel::Leagues => old_scale_value(current_date, player),
+    };
+    if value >= 1_000_000 {
         score += 20;
-    } else if player.market_value >= 500_000 {
+    } else if value >= 500_000 {
         score += 10;
     }
 
@@ -1494,5 +1516,52 @@ mod acceptance_tests {
             TransferNegotiationDecision::Rejected
         );
         assert!(game.messages.is_empty());
+    }
+}
+
+#[cfg(test)]
+mod interest_tests {
+    use super::*;
+    use crate::league_economy::EconomyModel;
+
+    fn welsh_regular() -> domain::player::Player {
+        let mut player = domain::player::Player::new(
+            "p".to_string(),
+            "P".to_string(),
+            "P".to_string(),
+            "2000-01-01".to_string(),
+            "WAL".to_string(),
+            domain::player::Position::Midfielder,
+            crate::test_support::uniform_attributes(55),
+        );
+        crate::player_rating::refresh_player_derived(
+            &mut player,
+            NaiveDate::from_ymd_opt(2026, 8, 1).unwrap(),
+        );
+        player.stage_contract_end(Some("2030-06-30".to_string()));
+        player.morale = 70;
+        player
+    }
+
+    /// Given a 26-year-old Welsh regular rated about 55, worth EUR 150k on the league economy
+    /// When buyers weigh him on each economy
+    /// Then he scores as a player of his standing always did, worth over a million on the old
+    ///      scale: the league economy's smaller values do not hide him from the market.
+    #[test]
+    fn a_small_leagues_regular_draws_the_interest_his_standing_always_did() {
+        let mut on_league_economy = welsh_regular();
+        on_league_economy.market_value = 150_000;
+        let mut on_old_economy = welsh_regular();
+        on_old_economy.market_value = 1_800_000;
+        let today = NaiveDate::from_ymd_opt(2026, 8, 1).unwrap();
+
+        assert_eq!(
+            incoming_interest_score_on(today, &on_league_economy, EconomyModel::Leagues),
+            incoming_interest_score_on(today, &on_old_economy, EconomyModel::Legacy),
+        );
+        assert_eq!(
+            incoming_interest_score_on(today, &on_old_economy, EconomyModel::Legacy),
+            20
+        );
     }
 }

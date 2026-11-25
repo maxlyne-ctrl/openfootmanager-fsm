@@ -65,6 +65,8 @@ pub(crate) fn backend_text_with_param(key: &str, param_name: &str, param_value: 
     message
 }
 
+/// The old economy's rule, which the tests pin; production code asks the economy-aware one.
+#[cfg(test)]
 pub(crate) fn expected_wage(player: &Player, team: &Team, current_date: NaiveDate) -> u32 {
     expected_wage_at(player, team, current_date, None)
 }

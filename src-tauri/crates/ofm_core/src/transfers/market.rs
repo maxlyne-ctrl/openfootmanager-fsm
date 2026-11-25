@@ -206,7 +206,7 @@ fn market_shortlist(
         {
             continue;
         }
-        let mut score = incoming_interest_score(current_date, player);
+        let mut score = incoming_interest_score_on(current_date, player, game.economy);
         if award_leaderboards.contains(&player.id) {
             score += AWARD_LEADERBOARD_INTEREST_BONUS;
         }
@@ -249,7 +249,12 @@ struct MarketSweep {
     position_depths: std::collections::HashMap<String, [usize; 4]>,
     wage_bills: std::collections::HashMap<String, i64>,
     player_index: std::collections::HashMap<String, usize>,
-    completed_ai_transfers: usize,
+    /// AI-to-AI deals completed today, by the buyer's league: each league's market has its own
+    /// day's deals. Counted for the whole world, the clubs listed first took them all, and in a
+    /// world of 22 leagues only England's clubs ever bought (finance_audit, shipped world).
+    completed_ai_transfers: std::collections::HashMap<String, usize>,
+    /// Each club's domestic league, read once; a club in none counts under one shared key.
+    league_of_club: std::collections::HashMap<String, String>,
     moved_player_ids: HashSet<String>,
     new_offers_per_player: std::collections::HashMap<String, usize>,
     new_loan_offers_per_player: std::collections::HashMap<String, usize>,
@@ -280,7 +285,17 @@ impl MarketSweep {
             .map(|(index, player)| (player.id.clone(), index))
             .collect();
 
-        let completed_ai_transfers = 0_usize;
+        let completed_ai_transfers = std::collections::HashMap::new();
+        let league_of_club: std::collections::HashMap<String, String> =
+            crate::end_of_season::ladder_rungs(game)
+                .into_iter()
+                .flat_map(|(_, league)| {
+                    league
+                        .participant_ids
+                        .iter()
+                        .map(|club| (club.clone(), league.id.clone()))
+                })
+                .collect();
         let moved_player_ids: HashSet<String> = HashSet::new();
         // New incoming offers opened to user players today, tracked to throttle the
         // inbox: at most one new club per player and a hard squad-wide ceiling.
@@ -328,6 +343,7 @@ impl MarketSweep {
             wage_bills,
             player_index,
             completed_ai_transfers,
+            league_of_club,
             moved_player_ids,
             new_offers_per_player,
             new_loan_offers_per_player,
@@ -419,7 +435,8 @@ impl MarketSweep {
                 {
                     return false;
                 }
-            } else if self.completed_ai_transfers >= MAX_COMPLETED_AI_TRANSFERS_PER_DAY {
+            } else if self.leagues_deals_done_today(buyer_id) >= MAX_COMPLETED_AI_TRANSFERS_PER_DAY
+            {
                 return false;
             }
             // Clubs only chase players that fit their stature and a position they
@@ -477,7 +494,7 @@ impl MarketSweep {
         }
 
         if candidate.score <= 60
-            || self.completed_ai_transfers >= MAX_COMPLETED_AI_TRANSFERS_PER_DAY
+            || self.leagues_deals_done_today(buyer_id) >= MAX_COMPLETED_AI_TRANSFERS_PER_DAY
         {
             return;
         }
@@ -495,7 +512,10 @@ impl MarketSweep {
         .is_ok()
         {
             self.moved_player_ids.insert(candidate.player_id);
-            self.completed_ai_transfers += 1;
+            *self
+                .completed_ai_transfers
+                .entry(self.league_key(buyer_id))
+                .or_default() += 1;
             // Only the seller is recounted: a club that has just bought has had its turn (each
             // club is a buyer once a sweep), so its new bill is never read again today, while
             // the seller may still buy and is held to the bill it has after the sale.
@@ -505,6 +525,20 @@ impl MarketSweep {
             );
         }
     }
+    fn league_key(&self, club_id: &str) -> String {
+        self.league_of_club
+            .get(club_id)
+            .cloned()
+            .unwrap_or_default()
+    }
+
+    fn leagues_deals_done_today(&self, buyer_id: &str) -> usize {
+        self.completed_ai_transfers
+            .get(&self.league_key(buyer_id))
+            .copied()
+            .unwrap_or(0)
+    }
+
     fn visit_buyer(&mut self, game: &mut Game, buyer_id: &str) {
         let Some(buyer_team) = game.teams.iter().find(|team| team.id == buyer_id).cloned() else {
             return;
