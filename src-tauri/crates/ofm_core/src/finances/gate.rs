@@ -282,6 +282,16 @@ mod tests {
         settle_gate_income(game, today);
     }
 
+    /// A club's own capacity: what its generated ground holds, which lands within a few per cent
+    /// of the CAPACITY it was built to, not on it.
+    fn capacity(game: &Game, team_id: &str) -> u32 {
+        game.teams
+            .iter()
+            .find(|team| team.id == team_id)
+            .unwrap()
+            .stadium_capacity
+    }
+
     fn gate_for(game: &Game, fixture_id: &str) -> i64 {
         let fixture = game
             .competitions_in_play()
@@ -289,7 +299,7 @@ mod tests {
             .flat_map(|competition| competition.fixtures.iter())
             .find(|fixture| fixture.id == fixture_id)
             .unwrap();
-        expected_gate(game, CAPACITY, fixture).unwrap()
+        expected_gate(game, capacity(game, &fixture.home_team_id), fixture).unwrap()
     }
 
     /// Given a club outside the user's league with a completed home league fixture on Saturday
@@ -613,13 +623,16 @@ mod tests {
             "league",
             vec![played("whistle", "2025-06-16", "user", "rival")],
         )];
-        let before = expected_gate_next_week(&game, "user", CAPACITY);
+        let before = expected_gate_next_week(&game, "user", capacity(&game, "user"));
 
         settle_today(&mut game);
 
         assert_eq!(before, gate_for(&game, "whistle"));
         assert_eq!(gates_of(&game, "user")[0].amount, before);
-        assert_eq!(expected_gate_next_week(&game, "user", CAPACITY), 0);
+        assert_eq!(
+            expected_gate_next_week(&game, "user", capacity(&game, "user")),
+            0
+        );
     }
 
     /// Given a home fixture completed on Saturday and not yet paid, read on the Sunday after
@@ -634,7 +647,7 @@ mod tests {
         )];
 
         assert_eq!(
-            expected_gate_next_week(&game, "user", CAPACITY),
+            expected_gate_next_week(&game, "user", capacity(&game, "user")),
             gate_for(&game, "saturday")
         );
     }
@@ -652,7 +665,7 @@ mod tests {
         )];
 
         assert_eq!(
-            expected_gate_next_week(&game, "user", CAPACITY),
+            expected_gate_next_week(&game, "user", capacity(&game, "user")),
             gate_for(&game, "saturday")
         );
     }
@@ -669,7 +682,10 @@ mod tests {
             vec![played("saturday", "2025-06-14", "user", "rival")],
         )];
 
-        assert_eq!(expected_gate_next_week(&game, "user", CAPACITY), 0);
+        assert_eq!(
+            expected_gate_next_week(&game, "user", capacity(&game, "user")),
+            0
+        );
     }
 
     /// Given a save from before per-fixture gates whose last legacy payday, a Monday, paid

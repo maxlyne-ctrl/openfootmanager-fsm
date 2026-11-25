@@ -4,8 +4,8 @@
 
 use super::*;
 
-/// Given test FC with no sponsor and a home league match on Thursday, three days away, in a
-///       40,000 stadium
+/// Given test FC with no sponsor and a home league match on Thursday, three days away, in the
+///       ground it was built (about 40,000: capacity is what the stands hold)
 /// When its finance snapshot is taken on Monday
 /// Then its weekly recurring income is that match's expected gate: sponsor income plus the gates
 ///      due this week
@@ -31,7 +31,13 @@ fn the_finance_snapshot_adds_this_weeks_home_gate_to_sponsor_income() {
         ..Default::default()
     }];
     game.sync_legacy_league();
-    let gate = finances::gate::expected_gate(&game, 40_000, &thursday).expect("a priced gate");
+    let capacity = game
+        .teams
+        .iter()
+        .find(|team| team.id == "team1")
+        .expect("test FC")
+        .stadium_capacity;
+    let gate = finances::gate::expected_gate(&game, capacity, &thursday).expect("a priced gate");
     assert!(gate > 0, "a full stadium takes something");
 
     let snapshot = finances::team_finance_snapshot(&game, "team1").expect("a snapshot");
