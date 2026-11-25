@@ -57,7 +57,13 @@ fn every_player_opens_at_the_rating_the_game_computes_for_him() {
 #[test]
 fn the_opening_world_keeps_its_tiers_mean_and_rare_wonderkids() {
     for seed in [1, 2] {
-        let game = WorldSpec::shipped(seed).build().expect("the world builds");
+        // The generator's own targets, read on the world as the generator makes it: the league
+        // economy re-rates every squad to its league's money on purpose.
+        let spec = WorldSpec {
+            economy: ofm_core::league_economy::EconomyModel::Legacy,
+            ..WorldSpec::shipped(seed)
+        };
+        let game = spec.build().expect("the world builds");
         let world = distribution_report(&game);
         let message = format!(
             "seed {seed}: S {:.2}% A {:.2}% mean {:.2} wonderkids {:.2}%",

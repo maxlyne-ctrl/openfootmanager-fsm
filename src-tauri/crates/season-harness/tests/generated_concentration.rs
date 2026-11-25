@@ -49,7 +49,14 @@ fn opening(seed: u64) -> &'static (ReputationReport, DistributionReport) {
         other => panic!("no cached opening for seed {other}"),
     };
     cell.get_or_init(|| {
-        let game = WorldSpec::shipped(seed).build().expect("the world builds");
+        // These tests pin the generator's own targets (the maintainer's tiers, mean and
+        // wonderkid rate), so they read the world as the generator makes it: the league economy
+        // re-rates every squad to its league's money on purpose, and is checked by its own tests.
+        let spec = WorldSpec {
+            economy: ofm_core::league_economy::EconomyModel::Legacy,
+            ..WorldSpec::shipped(seed)
+        };
+        let game = spec.build().expect("the world builds");
         let (reputation, world) = (reputation_report(&game), distribution_report(&game));
         eprintln!("OPENING seed {seed}: {}", summary(&reputation, &world));
         (reputation, world)

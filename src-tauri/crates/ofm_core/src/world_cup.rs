@@ -499,13 +499,10 @@ fn prepare_national_squads(game: &mut Game, field: &[String]) {
     for code in field {
         let have = pools.get(code).map(|ovrs| ovrs.len()).unwrap_or(0);
         for slot in have..TOPPED_UP_POOL {
-            game.players
-                .push(crate::generator::generate_national_team_player(
-                    code,
-                    slot,
-                    current_year,
-                    &mut rng,
-                ));
+            let mut player =
+                crate::generator::generate_national_team_player(code, slot, current_year, &mut rng);
+            crate::league_economy::fit_newcomer(game, &mut player);
+            game.players.push(player);
         }
     }
 

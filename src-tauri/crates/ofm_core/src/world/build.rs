@@ -37,12 +37,31 @@ pub fn build_game_from_imported_world(
     let opening_year = u32::try_from(clock.start_date.year())
         .unwrap_or_else(|_| crate::generator::default_opening_year());
     crate::generator::normalize_imported_world_for_career_start(&mut world, opening_year);
-    build_game_from_world_data(clock, manager, history, world, reputation_basis)
+    // Its authors set its players, wages and money, so it stays on the old economy: the league
+    // economy's income on top of authored wages would leave every club in a surplus. A package
+    // that declares its own money can open on the league economy once packages can say so.
+    build_game_before_the_economy(clock, manager, history, world, reputation_basis)
 }
 
 /// Builds the game for `world`, resolving its competition definitions with clubs ranked by
 /// `reputation_basis`.
 pub fn build_game_from_world_data(
+    clock: GameClock,
+    manager: Manager,
+    history: PastHistory,
+    world: WorldData,
+    reputation_basis: ReputationBasis<'_>,
+) -> (Game, StatsState) {
+    let (mut game, stats) =
+        build_game_before_the_economy(clock, manager, history, world, reputation_basis);
+    // A generated world's grounds, squads and money were drawn at random, so they are rebuilt
+    // to their leagues.
+    crate::league_economy::open_league_economy(&mut game);
+    (game, stats)
+}
+
+/// The game for `world` as both builds share it, before it is opened on the league economy.
+fn build_game_before_the_economy(
     clock: GameClock,
     manager: Manager,
     history: PastHistory,
@@ -230,6 +249,53 @@ mod tests {
         assert!(game.players.len() >= players);
         assert!(!game.competitions.is_empty());
         assert!(game.teams.iter().all(|team| team.history.len() == 2));
+    }
+
+    /// Given a world generated from a seed
+    /// When a game is built from it
+    /// Then the career opens on the league economy, and England's top flight plays in grounds
+    ///      more than twice the size of the Welsh league's.
+    #[test]
+    fn a_generated_world_opens_on_the_league_economy() {
+        let sources = DefinitionSources::embedded_only();
+        let mut config = WorldGenConfig::compact();
+        config.nations = WorldGenConfig::standard()
+            .nations
+            .into_iter()
+            .filter(|nation| ["ENG", "WAL"].contains(&nation.code.as_str()))
+            .collect();
+        let world = generate_world_data_seeded_with(5, &config, &sources);
+        let clock = GameClock::new(start_date_for_year(2033).unwrap());
+        let history = PastHistory {
+            start_year: 2033,
+            depth_years: 0,
+        };
+
+        let (game, _) =
+            build_game_from_world_data(clock, manager(), history, world, ReputationBasis::Stored);
+
+        assert_eq!(game.economy, crate::league_economy::EconomyModel::Leagues);
+        let economies = crate::league_economy::club_economies(&game);
+        let mean_top_flight_ground = |richest: bool| {
+            let mut by_league: std::collections::HashMap<&str, (i64, u64, u64)> =
+                std::collections::HashMap::new();
+            for team in &game.teams {
+                let Some(economy) = economies.get(&team.id).filter(|e| e.division == 0) else {
+                    continue;
+                };
+                let entry = by_league.entry(economy.league_id.as_str()).or_default();
+                entry.0 = economy.league.revenue_per_club;
+                entry.1 += u64::from(team.stadium_capacity);
+                entry.2 += 1;
+            }
+            let pick = if richest {
+                by_league.values().max_by_key(|row| row.0)
+            } else {
+                by_league.values().min_by_key(|row| row.0)
+            };
+            pick.map(|row| row.1 / row.2.max(1)).unwrap_or(0)
+        };
+        assert!(mean_top_flight_ground(true) > 2 * mean_top_flight_ground(false));
     }
 
     /// Given a resumed World Cup summer snapshot whose published club match clashes with a
@@ -469,10 +535,36 @@ mod tests {
         assert_eq!(records[0].retired_on, "2030-06-30");
     }
 
+    /// Given an imported world, as a package is
+    /// When a game is built from it
+    /// Then the career stays on the old economy: its authors set its players, wages and money,
+    ///      and the league economy's income on top of them would leave every club in a surplus.
+    #[test]
+    fn an_imported_world_stays_on_the_old_economy() {
+        let sources = DefinitionSources::embedded_only();
+        let world = generate_world_data_seeded_with(5, &WorldGenConfig::compact(), &sources);
+        let clock = GameClock::new(start_date_for_year(2033).unwrap());
+        let history = PastHistory {
+            start_year: 2033,
+            depth_years: 0,
+        };
+
+        let (game, _) = build_game_from_imported_world(
+            clock,
+            manager(),
+            history,
+            world,
+            ReputationBasis::Stored,
+        );
+
+        assert_eq!(game.economy, crate::league_economy::EconomyModel::Legacy);
+    }
+
     /// Given an imported world whose author gave no staff and whose clubs have no cash,
     /// When a game is built from it as an imported world and, separately, as a generated one,
     /// Then the imported game has a backroom for every club and cash for its wage bill; the
-    ///      generated build is left as the world was.
+    ///      generated build is given no backroom, and its cash is what the league economy opens
+    ///      a club with: a quarter of its season's revenue.
     #[test]
     fn an_imported_world_is_prepared_for_a_career_and_a_generated_one_is_not() {
         let sources = DefinitionSources::embedded_only();
@@ -517,7 +609,19 @@ mod tests {
             "every club has a backroom"
         );
         assert_eq!(employed(&generated), 0);
-        let cash = |game: &Game| game.teams.iter().map(|team| team.finance).sum::<i64>();
-        assert!(cash(&imported) > cash(&generated));
+        assert!(imported.teams.iter().all(|team| team.finance > 0));
+        let economies = crate::league_economy::club_economies(&generated);
+        for team in generated
+            .teams
+            .iter()
+            .filter(|t| economies.contains_key(&t.id))
+        {
+            assert_eq!(
+                team.finance,
+                economies[&team.id].revenue_target / 4,
+                "{}",
+                team.id
+            );
+        }
     }
 }

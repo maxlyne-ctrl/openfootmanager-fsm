@@ -30,7 +30,7 @@ pub fn free_agent_opening_offer(game: &Game, player_id: &str) -> Result<RenewalO
     let player = free_agent(game, player_id)?;
     let today = game.clock.current_date.date_naive();
     Ok(RenewalOffer {
-        weekly_wage: expected_wage(player, team, today),
+        weekly_wage: expected_wage_in(game, player, team, today),
         contract_years: expected_contract_years(player, today),
     })
 }
@@ -67,10 +67,11 @@ pub fn offer_free_agent_contract(
     let cooled_off = cool_stale_renewal_session(&mut game.players[player_index], current_date);
     let today = current_date.format("%Y-%m-%d").to_string();
     let round = next_renewal_round(&game.players[player_index], Some(today.as_str()));
-    let expected_wage = expected_wage(&game.players[player_index], &team, current_date);
+    let market = crate::league_economy::market_wage(game, &game.players[player_index], &team.id);
+    let expected_wage = expected_wage_at(&game.players[player_index], &team, current_date, market);
     let expected_years = expected_contract_years(&game.players[player_index], current_date);
     let reference_wage = reference_player_wage(&game.players[player_index]);
-    let minimum_wage = minimum_acceptable_wage(reference_wage);
+    let minimum_wage = minimum_acceptable_wage_at(reference_wage, market);
 
     if offer.contract_years == 0 || offer.contract_years > MAX_CONTRACT_YEARS {
         return Ok(renewal_outcome(

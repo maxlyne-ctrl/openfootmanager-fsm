@@ -40,10 +40,23 @@ pub fn evaluate_renewal_offer(
     current_date: NaiveDate,
     offer: &RenewalOffer,
 ) -> RenewalOutcome {
+    evaluate_renewal_offer_at(player, team, current_date, offer, None)
+}
+
+/// As [`evaluate_renewal_offer`], judged against `market`: the wage `team`'s market pays the
+/// player's rating on the league economy (`None` on the old one). He asks from it, and takes it
+/// when it is less than he is paid.
+pub fn evaluate_renewal_offer_at(
+    player: &Player,
+    team: &Team,
+    current_date: NaiveDate,
+    offer: &RenewalOffer,
+    market: Option<u32>,
+) -> RenewalOutcome {
     let round = next_renewal_round(player, None);
-    let expected_wage = expected_wage(player, team, current_date);
+    let expected_wage = expected_wage_at(player, team, current_date, market);
     let expected_years = expected_renewal_years(player, current_date);
-    let minimum_wage = minimum_acceptable_wage(player.wage());
+    let minimum_wage = minimum_acceptable_wage_at(player.wage(), market);
 
     if offer.contract_years == 0 || offer.contract_years > MAX_CONTRACT_YEARS {
         let feedback = build_renewal_feedback(
@@ -66,7 +79,8 @@ pub fn evaluate_renewal_offer(
         );
     }
 
-    if let Some(outcome) = non_extending_renewal_outcome(player, team, current_date, offer) {
+    if let Some(outcome) = non_extending_renewal_outcome(player, team, current_date, offer, market)
+    {
         return outcome;
     }
 
@@ -162,6 +176,7 @@ fn non_extending_renewal_outcome(
     team: &Team,
     current_date: NaiveDate,
     offer: &RenewalOffer,
+    market: Option<u32>,
 ) -> Option<RenewalOutcome> {
     let minimum = minimum_renewal_years(current_date, player.contract_end());
     if minimum.is_some_and(|years| offer.contract_years >= years) {
@@ -174,7 +189,7 @@ fn non_extending_renewal_outcome(
         RenewalDecision::Rejected,
         RenewalSessionStatus::Stalled,
         round,
-        expected_wage(player, team, current_date),
+        expected_wage_at(player, team, current_date, market),
         false,
     );
     feedback.mood = NegotiationMood::Firm;
@@ -267,7 +282,8 @@ pub fn propose_renewal(
     if offer.contract_years == 0 || offer.contract_years > MAX_CONTRACT_YEARS {
         let current_date = game.clock.current_date.date_naive();
         let round = next_renewal_round(&game.players[player_index], None);
-        let expected_wage = expected_wage(&game.players[player_index], &team, current_date);
+        let expected_wage =
+            expected_wage_in(game, &game.players[player_index], &team, current_date);
         return Ok(renewal_outcome(
             RenewalDecision::Rejected,
             None,
@@ -291,18 +307,28 @@ pub fn propose_renewal(
     if let Some(outcome) = settled_renewal_outcome(&game.players[player_index], current_date) {
         return Ok(outcome);
     }
-    if let Some(outcome) =
-        non_extending_renewal_outcome(&game.players[player_index], &team, current_date, &offer)
-    {
+    let market = crate::league_economy::market_wage(game, &game.players[player_index], &team.id);
+    if let Some(outcome) = non_extending_renewal_outcome(
+        &game.players[player_index],
+        &team,
+        current_date,
+        &offer,
+        market,
+    ) {
         return Ok(outcome);
     }
     let cooled_off = cool_stale_renewal_session(&mut game.players[player_index], current_date);
     let today = current_date.format("%Y-%m-%d").to_string();
     let round = next_renewal_round(&game.players[player_index], Some(today.as_str()));
 
-    let expected_wage = expected_wage(&game.players[player_index], &team, current_date);
-    let mut outcome =
-        evaluate_renewal_offer(&game.players[player_index], &team, current_date, &offer);
+    let expected_wage = expected_wage_at(&game.players[player_index], &team, current_date, market);
+    let mut outcome = evaluate_renewal_offer_at(
+        &game.players[player_index],
+        &team,
+        current_date,
+        &offer,
+        market,
+    );
     outcome.cooled_off = cooled_off;
     let relationship_blocked = outcome.session_status != RenewalSessionStatus::Blocked
         && should_manual_renewal_fail_on_relationship(

@@ -2,7 +2,7 @@ use crate::contract_wage_policy::{WagePolicyVerdict, wage_policy_verdict};
 use crate::contracts::{
     ContractWarningStage, DelegatedRenewalCase, DelegatedRenewalOptions, DelegatedRenewalReport,
     DelegatedRenewalResultStatus, ERR_RENEWAL_DOES_NOT_EXTEND, RENEWAL_MINIMUM_YEARS_KEY,
-    contract_warning_stage, expected_renewal_years, expected_wage, has_active_manager_block,
+    contract_warning_stage, expected_renewal_years, has_active_manager_block,
     has_let_expire_intent, minimum_renewal_years, round_up_to_nearest_thousand,
 };
 use crate::game::Game;
@@ -86,7 +86,7 @@ pub fn delegate_renewals(
 
     for player_index in candidate_indices {
         let player = &game.players[player_index];
-        let expected_wage = expected_wage(player, &team, current_date);
+        let expected_wage = crate::contracts::expected_wage_in(game, player, &team, current_date);
         let expected_years = expected_renewal_years(player, current_date);
         let max_wage = round_up_to_nearest_thousand(
             player

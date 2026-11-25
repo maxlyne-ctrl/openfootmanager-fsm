@@ -1,6 +1,8 @@
 pub mod cash_flow;
 pub mod gate;
 pub mod journal;
+mod league_income;
+pub(crate) use league_income::league_prize_money;
 mod league_position;
 mod weekly;
 

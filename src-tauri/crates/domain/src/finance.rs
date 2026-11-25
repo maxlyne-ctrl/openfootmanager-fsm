@@ -34,6 +34,10 @@ pub enum CashKind {
     BoardSupport,
     Facilities,
     Upkeep,
+    /// A league's television money, paid weekly (league economy careers only).
+    Broadcasting,
+    /// A club's commercial income: shirt, kit and partners (league economy careers only).
+    Commercial,
     Other,
 }
 

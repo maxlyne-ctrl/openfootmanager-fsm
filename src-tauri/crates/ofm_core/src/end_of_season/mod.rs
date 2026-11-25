@@ -238,6 +238,20 @@ fn division_prize_money(position: u32, tier: u32) -> i64 {
     prize_money_for_position(position) >> tier
 }
 
+/// The prize for finishing `position` of `clubs`: from the league's merit pot on the league
+/// economy, from the tier scale on the old one.
+fn division_prize(
+    league: Option<&crate::league_economy::LeagueEconomy>,
+    clubs: u32,
+    position: u32,
+    tier: u32,
+) -> i64 {
+    match league {
+        Some(league) => crate::finances::league_prize_money(league, clubs, position),
+        None => division_prize_money(position, tier),
+    }
+}
+
 /// True when `competition` still has a match the day loop can reach.
 ///
 /// A fixture is played on the day it is dated, and the loop never looks back,
@@ -623,6 +637,8 @@ fn regenerate_competitions_for_new_season(
         qualified_field,
         &retained,
     );
+    // With promotion and relegation applied, each club budgets for the level it now plays at.
+    crate::league_economy::refresh_budgets(game);
     refresh_user_competition_scope(game);
     game.sync_legacy_league();
 }
@@ -1027,9 +1043,19 @@ pub fn process_end_of_season(game: &mut Game) -> EndOfSeasonSummary {
             division.season,
             division.competition_id,
         );
+        // A league economy career pays the division's merit pot; the old economy its tier scale.
+        let league_economy = (game.economy == crate::league_economy::EconomyModel::Leagues)
+            .then(|| {
+                division_standings
+                    .first()
+                    .and_then(|first| crate::league_economy::club_economy(game, &first.team_id))
+            })
+            .flatten()
+            .map(|club| club.league);
+        let clubs = u32::try_from(division_standings.len()).unwrap_or(u32::MAX);
         for (idx, standing) in division_standings.iter().enumerate() {
             let position = (idx + 1) as u32;
-            let prize_money = division_prize_money(position, tier);
+            let prize_money = division_prize(league_economy.as_ref(), clubs, position, tier);
             let team_id = standing.team_id.clone();
             let prize_posted = if prize_money > 0 {
                 let date = chrono::NaiveDate::parse_from_str(&last_fixture_date, "%Y-%m-%d")
@@ -1474,6 +1500,27 @@ pub struct EndOfSeasonSummary {
 
 #[cfg(test)]
 mod tests {
+
+    /// Given a division of twenty on the league economy, in England's top flight
+    /// When the champion's prize is read
+    /// Then it comes from the league's merit pot, in the millions, not from the tier scale.
+    #[test]
+    fn a_league_economy_champion_is_paid_from_the_merit_pot() {
+        let league = crate::league_economy::league_economy("ENG", 0, 750);
+
+        let prize = division_prize(Some(&league), 20, 1, 0);
+
+        assert_eq!(prize, crate::finances::league_prize_money(&league, 20, 1));
+        assert!(prize > 10 * division_prize_money(1, 0));
+    }
+
+    /// Given a division on the old economy
+    /// When a prize is read
+    /// Then it is the tier scale, as it always was.
+    #[test]
+    fn an_old_economy_prize_is_the_tier_scale() {
+        assert_eq!(division_prize(None, 20, 3, 1), division_prize_money(3, 1));
+    }
     use super::*;
     use crate::clock::GameClock;
     use chrono::TimeZone;

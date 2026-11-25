@@ -60,6 +60,12 @@ pub(super) fn weekly_posts_by_club(
 ) -> Vec<(String, Vec<PostRequest>)> {
     let (player_wages_by_team, staff_wages_by_team) = weekly_wages_by_team(game);
     let position_by_team = league_positions(game);
+    // Worked out once a week for the whole world: only a league economy career has one.
+    let league_economies = if game.economy == crate::league_economy::EconomyModel::Leagues {
+        crate::league_economy::club_economies(game)
+    } else {
+        Default::default()
+    };
 
     let mut weekly_by_club: Vec<(String, Vec<PostRequest>)> = Vec::new();
     for team in &game.teams {
@@ -107,6 +113,26 @@ pub(super) fn weekly_posts_by_club(
                 CashKind::Sponsorship,
                 post_date,
             ));
+        }
+        if let Some(economy) = league_economies.get(&team.id) {
+            let running_costs = super::league_income::weekly_running_costs(economy);
+            if running_costs > 0 {
+                reqs.push(PostRequest::new(
+                    &team.id,
+                    -running_costs,
+                    CashKind::Upkeep,
+                    post_date,
+                ));
+            }
+            let (broadcast, commercial) = super::league_income::weekly_league_income(economy);
+            for (amount, kind) in [
+                (broadcast, CashKind::Broadcasting),
+                (commercial, CashKind::Commercial),
+            ] {
+                if amount > 0 {
+                    reqs.push(PostRequest::new(&team.id, amount, kind, post_date));
+                }
+            }
         }
         weekly_by_club.push((team.id.clone(), reqs));
     }

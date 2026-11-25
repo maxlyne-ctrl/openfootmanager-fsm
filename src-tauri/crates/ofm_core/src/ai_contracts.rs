@@ -22,8 +22,8 @@ use domain::team::Team;
 
 use crate::contract_wage_policy::wage_policy_verdict;
 use crate::contracts::{
-    RenewalDecision, RenewalOffer, apply_agreed_renewal, evaluate_renewal_offer,
-    expected_renewal_years, expected_wage, next_renewal_round, remaining_contract_days,
+    RenewalDecision, RenewalOffer, apply_agreed_renewal, expected_renewal_years,
+    next_renewal_round, remaining_contract_days,
 };
 use crate::game::Game;
 use crate::squad_floor::{
@@ -260,14 +260,16 @@ fn renew(game: &mut Game, team: &Team, player_index: usize, current_date: NaiveD
     let Some(contract_years) = expected_renewal_years(player, current_date) else {
         return;
     };
+    let market = crate::league_economy::market_wage(game, player, &team.id);
     let offer = RenewalOffer {
-        weekly_wage: expected_wage(player, team, current_date),
+        weekly_wage: crate::contracts::expected_wage_at(player, team, current_date, market),
         contract_years,
     };
     if !wage_policy_verdict(game, team, player, offer.weekly_wage).permits() {
         return;
     }
-    let outcome = evaluate_renewal_offer(player, team, current_date, &offer);
+    let outcome =
+        crate::contracts::evaluate_renewal_offer_at(player, team, current_date, &offer, market);
     if outcome.decision != RenewalDecision::Accepted {
         return;
     }
@@ -292,6 +294,7 @@ fn renew(game: &mut Game, team: &Team, player_index: usize, current_date: NaiveD
 mod tests {
     use super::*;
     use crate::clock::GameClock;
+    use crate::contracts::expected_wage;
     use chrono::{Datelike, Duration, TimeZone, Utc};
     use domain::manager::Manager;
     use domain::player::{PlayerAttributes, Position};
