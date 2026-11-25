@@ -262,12 +262,24 @@ pub struct Game {
     /// the season harness read it to check that it does.
     #[serde(skip)]
     pub squad_floor_top_ups: Vec<crate::squad_floor::SquadFloorTopUp>,
+    /// Whether this save has national teams, international competitions and call-ups.
+    /// Chosen when the career begins. Off, the world is club football only, which
+    /// roughly halves the time a season takes. A save from before the switch existed
+    /// had international football, so it keeps it.
+    #[serde(default = "international_football_by_default")]
+    pub international_football: bool,
     /// Which engine plays fixtures nobody is watching. Not saved: every game
-    /// starts on the quick resolver, the shipped behaviour. A tooling switch
-    /// for now (benchmarks, the season harness); a player-facing setting would
-    /// need persisting and a UI control.
+    /// starts on [`UnwatchedMatchEngine::default`]. A tooling switch for now
+    /// (benchmarks, the season harness); a player-facing setting would need
+    /// persisting and a UI control.
+    ///
+    /// [`UnwatchedMatchEngine::default`]: crate::live_match_manager::UnwatchedMatchEngine
     #[serde(skip)]
     pub unwatched_match_engine: crate::live_match_manager::UnwatchedMatchEngine,
+}
+
+fn international_football_by_default() -> bool {
+    true
 }
 
 impl Game {
@@ -348,6 +360,7 @@ impl Game {
             cash_journal: CashJournal::default(),
             cash_journal_dirty_ids: Vec::new(),
             squad_floor_top_ups: Vec::new(),
+            international_football: true,
             unwatched_match_engine: Default::default(),
         };
         game.promote_legacy_league();
@@ -620,6 +633,22 @@ mod tests {
             &["team1".to_string(), "team2".to_string()],
         ));
         game
+    }
+
+    /// Given a save written before international football could be switched off,
+    /// When it is read,
+    /// Then it keeps its international football.
+    #[test]
+    fn a_save_from_before_the_switch_keeps_international_football() {
+        let mut value = serde_json::to_value(game_with_only_a_legacy_league()).unwrap();
+        value
+            .as_object_mut()
+            .unwrap()
+            .remove("international_football");
+
+        let game: Game = serde_json::from_value(value).unwrap();
+
+        assert!(game.international_football);
     }
 
     #[test]

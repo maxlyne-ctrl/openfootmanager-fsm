@@ -175,7 +175,7 @@ fn ensure_foundations(
     division_size: usize,
     retained: &std::collections::HashSet<String>,
 ) {
-    if game.national_teams.is_empty() {
+    if game.national_teams.is_empty() && game.international_football {
         game.national_teams = build_national_teams(game);
     }
     if game.competitions.is_empty() {
@@ -206,6 +206,11 @@ fn ensure_foundations(
 /// Idempotent: existing national-team fixtures (e.g. from a loaded save) are
 /// left untouched, and shifting already-clear club fixtures is a no-op.
 fn ensure_international_windows(game: &mut Game, retained: &std::collections::HashSet<String>) {
+    if !game.international_football {
+        // No windows to keep clear, but the club calendar is still placed.
+        place_club_calendar(game, &Default::default(), retained);
+        return;
+    }
     // A career that opens during a World Cup summer stages the tournament right
     // away: the World Cup is otherwise created only at season rollover, which a
     // fresh save beginning in a cup summer (e.g. mid-2026) never reaches, so the
@@ -410,6 +415,52 @@ mod tests {
     use chrono::TimeZone;
     use domain::league::{CompetitionScope, CompetitionType, FixtureCompetition};
     use domain::manager::Manager;
+
+    fn international(game: &Game) -> (usize, usize, usize) {
+        let competitions = game
+            .competitions
+            .iter()
+            .filter(|c| c.kind == CompetitionType::InternationalNation)
+            .count();
+        let fixtures = game
+            .national_teams
+            .iter()
+            .map(|team| team.fixtures.len())
+            .sum();
+        (game.national_teams.len(), competitions, fixtures)
+    }
+
+    /// Given a save with international football switched off, when its world's
+    /// foundations are built, then the club competitions are built and no national
+    /// team, international competition or national fixture is.
+    #[test]
+    fn a_save_without_international_football_builds_only_club_competitions() {
+        let mut game = scope_test_game();
+        game.international_football = false;
+
+        ensure_multi_competition_foundations_with(&mut game, 4);
+
+        assert!(
+            !game.competitions.is_empty(),
+            "club football is still built"
+        );
+        assert_eq!(international(&game), (0, 0, 0));
+    }
+
+    /// Given a save with international football on, when its foundations are built,
+    /// then the national teams are built as before.
+    #[test]
+    fn a_save_with_international_football_builds_national_teams() {
+        let mut game = scope_test_game();
+        assert!(
+            game.international_football,
+            "international football is on by default"
+        );
+
+        ensure_multi_competition_foundations_with(&mut game, 4);
+
+        assert!(!game.national_teams.is_empty());
+    }
 
     #[test]
     fn preseason_opening_in_started_division_creates_no_past_scheduled_fixtures() {

@@ -127,6 +127,7 @@ fn write_game_to_connection(
             gate_settled_from: game.gate_settled_from.clone(),
             last_season_rollover_on: game.last_season_rollover_on.clone(),
             days_since_last_job_offer: game.days_since_last_job_offer,
+            international_football: game.international_football,
             available_staff_market_last_activity_date: game
                 .available_staff_market_last_activity_date
                 .clone(),
@@ -470,6 +471,7 @@ impl GamePersistenceReader {
             )?),
             cash_journal_dirty_ids: Vec::new(),
             squad_floor_top_ups: Vec::new(),
+            international_football: meta.international_football,
             unwatched_match_engine: Default::default(),
         };
         game.promote_legacy_league();
@@ -595,6 +597,7 @@ mod tests {
             gate_settled_from: None,
             last_season_rollover_on: None,
             days_since_last_job_offer: None,
+            international_football: true,
         }
     }
 
@@ -672,6 +675,39 @@ mod tests {
         let loaded = GamePersistenceReader::read_game(&db).unwrap();
 
         assert_eq!(loaded.seed, 0xDEAD_BEEF_DEAD_BEEF);
+    }
+
+    /// Given a career with international football switched off,
+    /// When it is saved and loaded,
+    /// Then it is still off, so the next season does not bring the national teams back.
+    #[test]
+    fn a_career_without_international_football_stays_without_it() {
+        let db = GameDatabase::open_in_memory().unwrap();
+        let mut game = sample_game_with_clock(2026, 1);
+        game.international_football = false;
+        GamePersistenceWriter::write_game(&db, &game, "save-1", "Career").unwrap();
+
+        let loaded = GamePersistenceReader::read_game(&db).unwrap();
+
+        assert!(!loaded.international_football);
+    }
+
+    /// Given a save written before international football could be switched off,
+    /// When it is loaded,
+    /// Then it has international football.
+    #[test]
+    fn a_save_from_before_the_switch_loads_with_international_football() {
+        let db = GameDatabase::open_in_memory().unwrap();
+        let mut game = sample_game_with_clock(2026, 1);
+        game.international_football = false;
+        GamePersistenceWriter::write_game(&db, &game, "save-1", "Career").unwrap();
+        db.conn()
+            .execute("UPDATE game_meta SET international_football = NULL", [])
+            .unwrap();
+
+        let loaded = GamePersistenceReader::read_game(&db).unwrap();
+
+        assert!(loaded.international_football);
     }
 
     /// Given a game that draws its World Cups the old way, and one that does not,

@@ -674,6 +674,11 @@ fn manage_international_calendar(
     qualified_field: Option<Vec<String>>,
     retained: &std::collections::HashSet<String>,
 ) {
+    if !game.international_football {
+        // No windows to keep clear, but the club calendar is still placed.
+        crate::world::foundations::place_club_calendar(game, &Default::default(), retained);
+        return;
+    }
     let mut published = crate::national_team::published_tournament_fixtures(game);
     published.retain(|(competition_id, _)| retained.contains(competition_id));
     if world_cup_due {
@@ -1881,6 +1886,68 @@ mod tests {
                 .iter()
                 .flat_map(|c| &c.fixtures)
                 .all(|f| f.competition != FixtureCompetition::Friendly)
+        );
+    }
+
+    fn national_pair(game: &mut Game) {
+        for id in ["nt-eng", "nt-fr"] {
+            let mut team =
+                domain::national_team::NationalTeam::new(id.into(), id.into(), id.into(), None);
+            team.squad_player_ids.push(format!("player-{id}"));
+            game.national_teams.push(team);
+        }
+    }
+
+    /// Given a save with international football off rolling into a World Cup summer,
+    /// When the rollover builds the international calendar,
+    /// Then no World Cup is staged.
+    #[test]
+    fn a_save_without_international_football_stages_no_world_cup() {
+        let mut game = calendar_game(at(2035, 6, 20));
+        add_division(&mut game, "eng-d1", "europe", at(2035, 8, 10));
+        national_pair(&mut game);
+        game.international_football = false;
+
+        manage_international_calendar(
+            &mut game,
+            at(2035, 8, 1),
+            at(2035, 6, 22),
+            true,
+            None,
+            &Default::default(),
+        );
+
+        assert!(
+            game.competitions
+                .iter()
+                .all(|c| c.kind != CompetitionType::InternationalNation)
+        );
+    }
+
+    /// Given a save with international football off rolling into an ordinary season,
+    /// When the rollover builds the international calendar,
+    /// Then no national friendly or qualifier is drawn.
+    #[test]
+    fn a_save_without_international_football_draws_no_national_fixtures() {
+        let mut game = calendar_game(at(2033, 5, 20));
+        add_division(&mut game, "eng-d1", "europe", at(2033, 8, 10));
+        national_pair(&mut game);
+        game.international_football = false;
+
+        manage_international_calendar(
+            &mut game,
+            at(2033, 8, 1),
+            at(2033, 5, 22),
+            false,
+            None,
+            &Default::default(),
+        );
+
+        assert!(game.national_teams.iter().all(|t| t.fixtures.is_empty()));
+        assert!(
+            game.competitions
+                .iter()
+                .all(|c| c.kind != CompetitionType::InternationalNation)
         );
     }
 

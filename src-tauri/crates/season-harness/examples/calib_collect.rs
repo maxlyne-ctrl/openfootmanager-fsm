@@ -74,6 +74,7 @@ fn main() {
         // Calibration plays every club's fixtures through the full engine.
         scope: Scope::Everything,
         package: None,
+        international_football: true,
     };
     let game = spec.build().expect("world");
 

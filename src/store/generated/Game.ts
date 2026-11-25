@@ -104,4 +104,11 @@ seed: number,
  * field and groups keep being drawn from the cup year alone, as they were, so a draw
  * already made is not contradicted by the next. Never set on a new game.
  */
-legacy_world_cup_draw: boolean, };
+legacy_world_cup_draw: boolean, 
+/**
+ * Whether this save has national teams, international competitions and call-ups.
+ * Chosen when the career begins. Off, the world is club football only, which
+ * roughly halves the time a season takes. A save from before the switch existed
+ * had international football, so it keeps it.
+ */
+international_football: boolean, };
