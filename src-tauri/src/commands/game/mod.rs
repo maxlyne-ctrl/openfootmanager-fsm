@@ -278,6 +278,7 @@ fn select_team_internal(
     let scope = CareerScope {
         regions: active_region_ids,
         competitions: active_competition_ids,
+        ..CareerScope::default()
     };
     let stats_state = begin_career(&mut game, team_id, scope, current_stats_state)?;
 

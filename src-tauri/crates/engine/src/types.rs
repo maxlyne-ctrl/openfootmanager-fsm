@@ -258,7 +258,7 @@ impl PlayerData {
 
     /// The factor on this player's match rating for everything the caller knows about him that
     /// the engine cannot see: his familiarity with the line he is in now, and his mood.
-    fn rating_factor(&self) -> f64 {
+    pub(crate) fn rating_factor(&self) -> f64 {
         crate::shared::rating_factor(self.familiarity_factor(), self.morale_factor)
     }
 

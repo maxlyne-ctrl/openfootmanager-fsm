@@ -20,13 +20,16 @@ pub(super) struct SideRatings {
     pub condition: f64,
 }
 
-/// A forward's finishing, as the full engine's shot resolution computes it.
+/// A forward's finishing, as the full engine's shot resolution computes it: his skill, times
+/// how at home he is in his line and his mood (`PlayerData::rating_factor`).
 pub(super) fn finishing(player: &PlayerData) -> f64 {
     (f64::from(player.shooting) + f64::from(player.composure) + f64::from(player.decisions)) / 3.0
+        * player.rating_factor()
 }
 
 fn keeping(player: &PlayerData) -> f64 {
     (f64::from(player.handling) + f64::from(player.reflexes) + f64::from(player.positioning)) / 3.0
+        * player.rating_factor()
 }
 
 impl SideRatings {
@@ -247,6 +250,39 @@ mod tests {
             players,
             tactics: TacticsConfig::default(),
         }
+    }
+
+    /// Given two sides alike but for their forwards and keeper being out of their lines and low
+    /// in mood, when they are rated, then that side finishes and keeps worse, as the full
+    /// engine's shot resolution has them do.
+    #[test]
+    fn an_unsettled_side_finishes_and_keeps_worse() {
+        let side = |factor: f64| {
+            let players = [
+                (Position::Goalkeeper, "gk"),
+                (Position::Defender, "d"),
+                (Position::Forward, "f1"),
+                (Position::Forward, "f2"),
+            ]
+            .into_iter()
+            .map(|(position, id)| PlayerData {
+                line_familiarity: [factor; 4],
+                ..player(id, position, 70)
+            })
+            .collect();
+            SideRatings::of(&team(players))
+        };
+        let settled = side(1.0);
+        let unsettled = side(0.8);
+
+        assert!(
+            unsettled.finishing < settled.finishing,
+            "{unsettled:?} vs {settled:?}"
+        );
+        assert!(
+            unsettled.keeping < settled.keeping,
+            "{unsettled:?} vs {settled:?}"
+        );
     }
 
     /// Given a side with no forwards, when it is rated, then its finishing

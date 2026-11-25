@@ -224,20 +224,28 @@ pub(crate) fn club_needs_him_given(
     !can_spare_one(seniors, &player.position)
 }
 
-/// Seniors of this player's group registered to `team_id`, him excluded.
-pub(crate) fn others_in_his_group(game: &Game, team_id: &str, player: &Player) -> usize {
+/// Seniors of this player's group registered to `team_id`, him excluded. `club` is the club's
+/// players, or any wider list that holds them: a player of another club does not count.
+pub(crate) fn others_in_his_group<'a>(
+    club: impl IntoIterator<Item = &'a Player>,
+    team_id: &str,
+    player: &Player,
+) -> usize {
     let group = player.position.to_group_position();
-    game.players
-        .iter()
+    club.into_iter()
         .filter(|other| other.id != player.id && holds_up_the_floor(other, team_id))
         .filter(|other| other.position.to_group_position() == group)
         .count()
 }
 
-/// Seniors registered to `team_id`, this player excluded.
-pub(crate) fn other_seniors(game: &Game, team_id: &str, player: &Player) -> usize {
-    game.players
-        .iter()
+/// Seniors registered to `team_id`, this player excluded. `club` as for
+/// [`others_in_his_group`].
+pub(crate) fn other_seniors<'a>(
+    club: impl IntoIterator<Item = &'a Player>,
+    team_id: &str,
+    player: &Player,
+) -> usize {
+    club.into_iter()
         .filter(|other| other.id != player.id && holds_up_the_floor(other, team_id))
         .count()
 }

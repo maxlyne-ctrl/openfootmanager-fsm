@@ -271,11 +271,55 @@ fn a_region_the_player_asked_for_is_kept_alongside_the_clubs_own() {
     let scope = CareerScope {
         regions: Some(vec![asked_for.clone()]),
         competitions: None,
+        ..CareerScope::default()
     };
     begin_career(&mut game, "eng-a", scope, StatsState::default()).expect("the career begins");
 
     assert!(game.active_region_ids.contains(&asked_for));
     assert!(game.active_region_ids.contains(&infer_region_id("ENG")));
+}
+
+// ── Scenario: international football ────────────────────────────────────────
+
+/// Given a world that has national teams,
+/// When a career begins with international football switched off,
+/// Then the save records the choice and holds no national team, international
+/// competition or national fixture.
+#[test]
+fn a_career_without_international_football_holds_no_national_football() {
+    let mut game = world_awaiting_a_manager();
+    ensure_multi_competition_foundations(&mut game);
+    assert!(
+        !game.national_teams.is_empty(),
+        "the world starts with national teams, so this scenario proves something"
+    );
+    let scope = CareerScope {
+        international_football: Some(false),
+        ..CareerScope::default()
+    };
+
+    begin_career(&mut game, "eng-a", scope, StatsState::default()).expect("the career begins");
+
+    assert!(!game.international_football);
+    assert!(game.national_teams.is_empty());
+    assert!(
+        game.competitions
+            .iter()
+            .all(|c| { c.kind != domain::league::CompetitionType::InternationalNation })
+    );
+}
+
+/// Given a world that has national teams,
+/// When a career begins without saying anything about international football,
+/// Then international football is kept.
+#[test]
+fn a_career_keeps_international_football_unless_asked_not_to() {
+    let mut game = world_awaiting_a_manager();
+
+    begin(&mut game, "eng-a").expect("the career begins");
+
+    assert!(game.international_football);
+    assert!(!game.national_teams.is_empty());
 }
 
 // ── Scenario: the players ───────────────────────────────────────────────────

@@ -931,6 +931,8 @@ export interface GameStateData {
   emitted_events?: string[];
   legacy_tactics_imported?: boolean;
   legacy_world_cup_draw?: boolean;
+  /** Whether the career has national teams and international competitions; absent in older saves, which have them. */
+  international_football?: boolean;
   /** The first date a completed home fixture is paid a gate for (`YYYY-MM-DD`); null until then. */
   gate_settled_from?: string | null;
   /** The day the last season ended (`YYYY-MM-DD`): a scout's report from before it is out of date.

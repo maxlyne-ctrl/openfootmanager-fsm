@@ -30,12 +30,12 @@ pub fn weekly_cash_flow(game: &Game, club_id: &str) -> Vec<WeeklyCashFlow> {
     let mut weeks: BTreeMap<NaiveDate, (i64, i64)> = BTreeMap::new();
     for post in game
         .cash_journal
-        .iter()
-        .filter(|post| post.club_id == club_id && post.kind != CashKind::OpeningBalance)
+        .posts_for(club_id)
+        .filter(|post| post.kind != CashKind::OpeningBalance)
     {
         // Journal dates are written from the game clock as `YYYY-MM-DD`; one that isn't can't be
         // placed in a week, and leaving it out is all the chart can do with it.
-        let Ok(date) = NaiveDate::parse_from_str(&post.date, "%Y-%m-%d") else {
+        let Some(date) = domain::date::parse_iso_date(&post.date) else {
             continue;
         };
         let monday = date - Duration::days(i64::from(date.weekday().num_days_from_monday()));

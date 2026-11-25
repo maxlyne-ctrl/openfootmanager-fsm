@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use std::sync::Arc;
 
@@ -56,10 +56,17 @@ impl CashKind {
 }
 
 /// Append-only cash journal. `Clone` is a pointer bump; writers copy-on-write.
+///
+/// A career adds tens of thousands of posts a season, so the journal also keeps where each
+/// club's posts are and which ids it holds: asking about one club or one post never scans
+/// every post the world has made. Both are derived from `posts` and rebuilt with it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct CashJournal {
     posts: Arc<Vec<CashPost>>,
-    clubs: Arc<HashSet<String>>,
+    /// Each club's posts, as positions in `posts`, in posting order.
+    by_club: Arc<HashMap<String, Vec<usize>>>,
+    /// Every post's id. Post ids are unique keys, so this is a set of them, nothing more.
+    ids: Arc<HashSet<String>>,
 }
 
 impl Deref for CashJournal {
@@ -72,11 +79,9 @@ impl Deref for CashJournal {
 
 impl CashJournal {
     pub fn from_vec(posts: Vec<CashPost>) -> Self {
-        let clubs = posts.iter().map(|post| post.club_id.clone()).collect();
-        Self {
-            posts: Arc::new(posts),
-            clubs: Arc::new(clubs),
-        }
+        let mut journal = Self::default();
+        journal.extend(posts);
+        journal
     }
 
     pub fn shares_storage_with(&self, other: &Self) -> bool {
@@ -84,7 +89,21 @@ impl CashJournal {
     }
 
     pub fn contains_club(&self, club_id: &str) -> bool {
-        self.clubs.contains(club_id)
+        self.by_club.contains_key(club_id)
+    }
+
+    /// Whether a post with this id has been made.
+    pub fn contains_post(&self, post_id: &str) -> bool {
+        self.ids.contains(post_id)
+    }
+
+    /// One club's posts, in the order they were made.
+    pub fn posts_for<'a>(&'a self, club_id: &str) -> impl Iterator<Item = &'a CashPost> + 'a {
+        self.by_club
+            .get(club_id)
+            .map_or(&[][..], Vec::as_slice)
+            .iter()
+            .map(|&position| &self.posts[position])
     }
 
     pub fn extend(&mut self, posts: impl IntoIterator<Item = CashPost>) {
@@ -92,9 +111,15 @@ impl CashJournal {
         if extra.is_empty() {
             return;
         }
-        let clubs = Arc::make_mut(&mut self.clubs);
-        for post in &extra {
-            clubs.insert(post.club_id.clone());
+        let first = self.posts.len();
+        let by_club = Arc::make_mut(&mut self.by_club);
+        let ids = Arc::make_mut(&mut self.ids);
+        for (offset, post) in extra.iter().enumerate() {
+            by_club
+                .entry(post.club_id.clone())
+                .or_default()
+                .push(first + offset);
+            ids.insert(post.id.clone());
         }
         Arc::make_mut(&mut self.posts).extend(extra);
     }
@@ -102,8 +127,7 @@ impl CashJournal {
     /// Sum of posts for one club. Folded in `i128` so prefix order cannot panic.
     pub fn cash_for(&self, club_id: &str) -> i64 {
         let sum = self
-            .iter()
-            .filter(|post| post.club_id == club_id)
+            .posts_for(club_id)
             .fold(0i128, |acc, post| acc + i128::from(post.amount));
         i64::try_from(sum).expect("journal overflow is a bug: post_all rejected it")
     }
@@ -145,5 +169,40 @@ mod tests {
             CashJournal::from_vec(vec![post("1", i64::MAX), post("3", -1), post("2", 1)]);
         assert_eq!(credits_first.cash_for("alpha"), i64::MAX);
         assert_eq!(debit_first.cash_for("alpha"), i64::MAX);
+    }
+
+    /// Given a journal read from a save and then added to,
+    /// When it is asked whether a post id is in it,
+    /// Then it knows both the saved posts and the added ones, and no others.
+    #[test]
+    fn the_journal_knows_which_post_ids_it_holds() {
+        let mut journal = CashJournal::from_vec(vec![post("saved", 10)]);
+        journal.extend(vec![post("added", 5)]);
+
+        assert!(journal.contains_post("saved"));
+        assert!(journal.contains_post("added"));
+        assert!(!journal.contains_post("never-posted"));
+    }
+
+    /// Given a journal holding two clubs' posts, read from a save and then added to,
+    /// When one club's posts are asked for,
+    /// Then they are that club's, in the order they were posted, and its cash adds them up.
+    #[test]
+    fn a_clubs_posts_are_its_own_in_posting_order() {
+        let other = |id: &str, amount: i64| CashPost {
+            club_id: "bravo".to_string(),
+            ..post(id, amount)
+        };
+        let mut journal = CashJournal::from_vec(vec![post("a1", 10), other("b1", 7)]);
+        journal.extend(vec![other("b2", 1), post("a2", -3)]);
+
+        let alpha: Vec<&str> = journal
+            .posts_for("alpha")
+            .map(|post| post.id.as_str())
+            .collect();
+
+        assert_eq!(alpha, ["a1", "a2"]);
+        assert_eq!(journal.cash_for("alpha"), 7);
+        assert_eq!(journal.posts_for("nobody").count(), 0);
     }
 }

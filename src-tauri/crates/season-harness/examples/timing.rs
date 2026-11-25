@@ -54,9 +54,11 @@ fn main() {
         .unwrap_or(5);
     let t0 = Instant::now();
     let mut game = WorldSpec::gate(42).build().unwrap();
-    if std::env::args().nth(2).as_deref() == Some("full") {
-        game.unwatched_match_engine = ofm_core::live_match_manager::UnwatchedMatchEngine::Full;
-    }
+    game.unwatched_match_engine = if std::env::args().nth(2).as_deref() == Some("full") {
+        ofm_core::live_match_manager::UnwatchedMatchEngine::Full
+    } else {
+        ofm_core::live_match_manager::UnwatchedMatchEngine::Quick
+    };
     println!(
         "world built in {:.2}s: teams={} players={} competitions={}",
         t0.elapsed().as_secs_f64(),

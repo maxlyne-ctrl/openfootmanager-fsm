@@ -48,14 +48,20 @@ pub(crate) fn apply_ai_contract_decisions(game: &mut Game, weekday_num: u32) {
     // Found once for every club reviewing today: a renewal changes a player's terms, never the
     // club that holds his contract, so no club's group goes stale during the reviews.
     let contracts = contracts_by_club(&game.players);
+    // Where each club's players are registered, found once: a renewal changes a player's terms,
+    // never his club, so it cannot go stale. Counting a squad from it rather than from every
+    // player in the world is what keeps a day's reviews from growing with the world.
+    let registered = crate::match_day_eligibility::positions_by_club(&game.players);
     for team_id in crate::ai_tactics::ai_clubs_reviewing_on(game, weekday_num) {
         let Some(team) = game.teams.iter().find(|team| team.id == team_id).cloned() else {
             continue;
         };
         let held = contracts.get(&team_id).map_or(&[][..], Vec::as_slice);
         debug_assert_contracts_are_current(&game.players, &team_id, held);
+        let squad = registered.get(&team_id).map_or(&[][..], Vec::as_slice);
         for player_index in contracts_running_down(&game.players, held, current_date) {
-            if keeps(game, &team, &game.players[player_index], current_date) {
+            let club: Vec<&Player> = squad.iter().map(|&at| &game.players[at]).collect();
+            if keeps(&club, &team, &game.players[player_index], current_date) {
                 renew(game, &team, player_index, current_date);
             }
         }
@@ -209,33 +215,32 @@ fn contracts_running_down(
         .collect()
 }
 
-/// Does the club want this player for another contract?
-fn keeps(game: &Game, team: &Team, player: &Player, current_date: NaiveDate) -> bool {
-    needed_for_depth(game, &team.id, player) || worth_keeping(game, team, player, current_date)
+/// Does the club want this player for another contract? `club` is the players registered to it.
+fn keeps(club: &[&Player], team: &Team, player: &Player, current_date: NaiveDate) -> bool {
+    needed_for_depth(club, &team.id, player) || worth_keeping(club, team, player, current_date)
 }
 
 /// Letting him go would leave the club under what its squad planning aims for
 /// — in his group, or in all — counted as the floor counts. Whether the club
 /// may go over its wage policy to keep him is not decided here: `renew` asks
 /// the one rule every club answers to.
-fn needed_for_depth(game: &Game, team_id: &str, player: &Player) -> bool {
-    others_in_his_group(game, team_id, player)
+fn needed_for_depth(club: &[&Player], team_id: &str, player: &Player) -> bool {
+    others_in_his_group(club.iter().copied(), team_id, player)
         < group_floor(&player.position.to_group_position()) + PLANNING_MARGIN_PER_GROUP
-        || other_seniors(game, team_id, player) < PLANNING_TARGET_SENIORS
+        || other_seniors(club.iter().copied(), team_id, player) < PLANNING_TARGET_SENIORS
 }
 
 /// Good enough and young enough to want.
-fn worth_keeping(game: &Game, team: &Team, player: &Player, current_date: NaiveDate) -> bool {
+fn worth_keeping(club: &[&Player], team: &Team, player: &Player, current_date: NaiveDate) -> bool {
     let age = domain::age::age_on_or_unknown(current_date, &player.date_of_birth);
     age <= PROSPECT_AGE_LIMIT
-        || (age <= PEAK_AGE_LIMIT && player.ovr >= squad_median_ovr(game, &team.id))
+        || (age <= PEAK_AGE_LIMIT && player.ovr >= squad_median_ovr(club, &team.id))
 }
 
 /// The median rating of the club's seniors, counted as the floor counts them:
 /// an academy of low-rated youngsters is not the standard a senior is held to.
-fn squad_median_ovr(game: &Game, team_id: &str) -> u8 {
-    let mut ratings: Vec<u8> = game
-        .players
+fn squad_median_ovr(club: &[&Player], team_id: &str) -> u8 {
+    let mut ratings: Vec<u8> = club
         .iter()
         .filter(|player| player.team_id.as_deref() == Some(team_id))
         .filter(|player| player.squad_role == domain::player::SquadRole::Senior)
@@ -671,7 +676,8 @@ mod tests {
     fn a_club_at_the_floor_without_him_keeps_to_its_wage_policy() {
         use crate::contract_wage_policy::WagePolicyVerdict;
         let mut game = over_policy_forward(2);
-        assert!(needed_for_depth(&game, "ai", game.players.last().unwrap()));
+        let club: Vec<&Player> = game.players.iter().collect();
+        assert!(needed_for_depth(&club, "ai", game.players.last().unwrap()));
         assert_eq!(
             verdict_for(&game, "costly_fwd"),
             WagePolicyVerdict::OverPolicy

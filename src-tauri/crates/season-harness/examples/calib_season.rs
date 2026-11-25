@@ -185,9 +185,13 @@ fn main() {
         .and_then(|s| s.parse().ok())
         .unwrap_or(42);
     let mut game = WorldSpec::gate(seed).build().expect("world");
-    if full {
-        game.unwatched_match_engine = UnwatchedMatchEngine::Full;
-    }
+    // Set either way: the game's default has changed before, and a calibration that
+    // silently ran the default would compare an engine with itself.
+    game.unwatched_match_engine = if full {
+        UnwatchedMatchEngine::Full
+    } else {
+        UnwatchedMatchEngine::Quick
+    };
     let mut recorder = Recorder {
         pending: HashMap::new(),
         csv: String::from(

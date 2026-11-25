@@ -70,6 +70,8 @@ pub struct WorldSpec {
     /// A package directory to build the world from, as the app does for an installed package.
     /// `None` generates the world from `nations` instead.
     pub package: Option<PathBuf>,
+    /// Whether the career has national teams and international competitions.
+    pub international_football: bool,
 }
 
 impl WorldSpec {
@@ -83,6 +85,7 @@ impl WorldSpec {
             start_year: 2033,
             scope: Scope::Followed,
             package: None,
+            international_football: true,
         }
     }
 
@@ -186,7 +189,11 @@ impl WorldSpec {
 
     fn begin_career_in(&self, game: &mut Game, stats: StatsState) -> Result<(), String> {
         let club = self.strongest_club(game)?;
-        begin_career(game, &club, CareerScope::default(), stats)?;
+        let scope = CareerScope {
+            international_football: Some(self.international_football),
+            ..CareerScope::default()
+        };
+        begin_career(game, &club, scope, stats)?;
         if self.scope == Scope::Everything {
             game.active_region_ids.clear();
             game.active_competition_ids.clear();

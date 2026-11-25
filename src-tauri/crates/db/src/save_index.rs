@@ -499,6 +499,7 @@ mod tests {
                 gate_settled_from: None,
                 last_season_rollover_on: None,
                 days_since_last_job_offer: None,
+                international_football: true,
             },
         )
         .unwrap();
@@ -629,6 +630,7 @@ mod tests {
                 gate_settled_from: None,
                 last_season_rollover_on: None,
                 days_since_last_job_offer: None,
+                international_football: true,
             },
         )
         .unwrap();

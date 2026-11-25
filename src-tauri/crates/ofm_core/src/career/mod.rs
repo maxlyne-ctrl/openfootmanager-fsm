@@ -92,6 +92,8 @@ pub fn date_opening_contracts(game: &mut Game, align_clock_to: Option<&str>) {
 pub struct CareerScope {
     pub regions: Option<Vec<String>>,
     pub competitions: Option<Vec<String>>,
+    /// `Some(false)` opens a club-football-only career; `None` keeps the world's own.
+    pub international_football: Option<bool>,
 }
 
 /// Put the player's manager in charge of `team_id` and open the career.
@@ -123,6 +125,9 @@ pub fn begin_career(
         return Err("be.error.teamNotFound".to_string());
     }
 
+    if scope.international_football == Some(false) {
+        crate::national_team::remove_international_football(game);
+    }
     ensure_multi_competition_foundations(game);
     date_opening_contracts(game, Some(team_id));
     let opening = game.clock.current_date;

@@ -177,6 +177,24 @@ pub fn schedule_national_team_friendlies(
     }
 }
 
+/// Switch a save's international football off: no national team, international
+/// competition or national fixture is left, and none is scheduled again (the
+/// foundations and the rollover read [`Game::international_football`]).
+pub(crate) fn remove_international_football(game: &mut Game) {
+    game.international_football = false;
+    game.national_teams.clear();
+    game.competitions.retain(|competition| {
+        competition.kind != domain::league::CompetitionType::InternationalNation
+    });
+    let remaining: std::collections::HashSet<&str> = game
+        .competitions
+        .iter()
+        .map(|competition| competition.id.as_str())
+        .collect();
+    game.active_competition_ids
+        .retain(|id| remaining.contains(id.as_str()));
+}
+
 /// Simulate every national-team fixture due on `today`, applying full carry-back
 /// to the called-up club players. Returns the number of fixtures simulated.
 pub fn process_national_team_fixtures_due(game: &mut Game, today: &str) -> usize {
