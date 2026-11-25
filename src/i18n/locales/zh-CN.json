@@ -329,7 +329,9 @@
       "needOne": "请至少开启一项赛事。",
       "summary": "模拟 {{regions}} 个地区 · {{competitions}} 项赛事",
       "clubs": "模拟地区内共有 {{clubs}} 家俱乐部",
-      "apply": "应用"
+      "apply": "应用",
+      "internationalFootball": "国际足球",
+      "internationalFootballHint": "国家队、国家队征召和世界杯。关闭后生涯只有俱乐部足球，推进更快。"
     },
     "rail": {
       "label": "国家和联赛",

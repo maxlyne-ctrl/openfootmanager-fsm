@@ -36,6 +36,7 @@ const DRAFT: ScopeDraft = {
   homeCountryCode: "SE",
   regions: { western: false },
   competitions: {},
+  internationalFootball: true,
 };
 
 describe("competitionRequiredRegions", () => {
@@ -197,5 +198,42 @@ describe("clubsInRegions", () => {
 
     expect(clubsInRegions(REGIONS, new Set(["scandinavia"]), teams)).toBe(2);
     expect(clubsInRegions(REGIONS, new Set(["scandinavia", "western"]), teams)).toBe(3);
+  });
+});
+
+describe("international football", () => {
+  const worldCup = competition({
+    id: "wc",
+    kind: "InternationalNation",
+    scope: "International",
+  });
+  const yours = new Set<string>();
+  const active = new Set(["scandinavia"]);
+
+  /**
+   * Given a national-team competition the player has chosen
+   * When the career opens without international football
+   * Then it is not simulated and is not sent to the game, whatever its own choice was.
+   */
+  it("does not simulate a national-team competition when international football is off", () => {
+    const draft: ScopeDraft = {
+      ...DRAFT,
+      competitions: { wc: true },
+      internationalFootball: false,
+    };
+
+    expect(competitionState(worldCup, draft, yours, active).on).toBe(false);
+    expect(enabledCompetitionIds([worldCup], draft, yours, active)).toEqual([]);
+  });
+
+  /**
+   * Given the same competition chosen
+   * When international football is on
+   * Then it is simulated as any other choice is.
+   */
+  it("simulates a chosen national-team competition when international football is on", () => {
+    const draft: ScopeDraft = { ...DRAFT, competitions: { wc: true } };
+
+    expect(enabledCompetitionIds([worldCup], draft, yours, active)).toEqual(["wc"]);
   });
 });

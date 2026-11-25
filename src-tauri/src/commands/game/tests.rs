@@ -796,11 +796,44 @@ fn select_team_hands_the_screen_the_installed_careers_token() {
     install_career(&state, game, sample_stats_state(), None);
 
     let shown =
-        super::select_team_internal(&state, &mut save_manager, "team1", None, None).unwrap();
+        super::select_team_internal(&state, &mut save_manager, "team1", CareerScope::default())
+            .unwrap();
 
     let installed = state.get_game(|game| game.career_token).unwrap();
     assert_ne!(installed, 0);
     assert_eq!(shown.career_token, installed);
+}
+
+/// Given a clubless career with international football, installed as the active game
+/// When the player picks a club with international football switched off
+/// Then the career that is installed, and the game the screen is handed, are club football only.
+#[test]
+fn select_team_opens_a_club_football_only_career_when_asked() {
+    use crate::application::career::install_career;
+    let dir = tempfile::tempdir().unwrap();
+    let mut save_manager = db::save_manager::SaveManager::init(dir.path()).unwrap();
+    let state = ofm_core::state::StateManager::new();
+    let mut game = make_bootstrap_test_game();
+    game.manager.team_id = None;
+    assert!(game.international_football);
+    install_career(&state, game, sample_stats_state(), None);
+
+    let shown = super::select_team_internal(
+        &state,
+        &mut save_manager,
+        "team1",
+        CareerScope {
+            international_football: Some(false),
+            ..CareerScope::default()
+        },
+    )
+    .unwrap();
+
+    let installed = state
+        .get_game(|game| (game.international_football, game.national_teams.len()))
+        .unwrap();
+    assert_eq!(installed, (false, 0));
+    assert!(!shown.international_football);
 }
 
 /// Given a freshly built game and the package lockfile it was built from

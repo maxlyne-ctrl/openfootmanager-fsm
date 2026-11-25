@@ -46,6 +46,10 @@ export function useTeamSelection({
   // the same way). Applying the dialog makes the choice explicit, region by region.
   const [playerRegionIds, setPlayerRegionIds] = useState<ReadonlySet<string> | null>(null);
   const [competitionSelection, setCompetitionSelection] = useState<CompetitionSelection>({});
+  // A world opens with international football unless it was built without it.
+  const [internationalFootball, setInternationalFootball] = useState(
+    () => gameState?.international_football ?? true,
+  );
   const [isConfirming, setIsConfirming] = useState(false);
   const { clubRatings, getTeamAvgOvr } = useTeamSelectionRatings(gameState);
   const competitions = useMemo(
@@ -234,6 +238,7 @@ export function useTeamSelection({
       Array.from(playerRegionIds ?? defaultRegionIds, (id) => [id, true]),
     ),
     competitions: competitionSelection,
+    internationalFootball,
   };
   const activeRegionIds = scopeActiveRegionIds(
     scopeDraft,
@@ -258,6 +263,7 @@ export function useTeamSelection({
       ),
     );
     setCompetitionSelection(draft.competitions);
+    setInternationalFootball(draft.internationalFootball);
   };
 
   const handleConfirm = async () => {
@@ -268,6 +274,7 @@ export function useTeamSelection({
         teamId: selectedTeam.id,
         activeRegionIds,
         activeCompetitionIds: enabledCompetitionIds,
+        internationalFootball,
       });
       try {
         await prewarmManagerSquadPortraits(updatedGame);

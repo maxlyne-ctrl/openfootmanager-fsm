@@ -71,6 +71,12 @@ const CUP = comp({
   kind: "Cup",
   required_region_ids: ["scandinavia", "western"],
 });
+const WORLD_CUP = comp({
+  id: "wc",
+  name: "World Cup",
+  scope: "International",
+  kind: "InternationalNation",
+});
 const COMPETITIONS = [SE1, SE3, DE1, CUP];
 const TEAMS: TeamData[] = [
   createTeam({ id: "a", country: "SE" }),
@@ -82,7 +88,8 @@ const INITIAL: ScopeDraft = {
   homeRegionId: "scandinavia",
   homeCountryCode: "SE",
   regions: {},
-  competitions: { se1: true, se3: true, de1: true, cup: true },
+  competitions: { se1: true, se3: true, de1: true, cup: true, wc: true },
+  internationalFootball: true,
 };
 
 function renderDialog(overrides: Partial<Parameters<typeof SimulationDialog>[0]> = {}) {
@@ -317,5 +324,32 @@ describe("SimulationDialog", () => {
     expect(screen.getByRole("heading", { name: "Domestic" })).toBeInTheDocument();
     const domestic = screen.getByRole("region", { name: "Domestic" });
     expect(within(domestic).getByText("teamSelect.scope.groupCount:2/3")).toBeInTheDocument();
+  });
+
+  /**
+   * Given the dialog opened on a career with international football
+   * When the international football switch is turned off and the dialog applied
+   * Then the national-team competitions leave the list, and the settings handed on open a
+   *      club-football-only career.
+   */
+  it("opens a club-football-only career when international football is switched off", () => {
+    const handlers = renderDialog({ competitions: [...COMPETITIONS, WORLD_CUP] });
+    const international = screen.getByRole("switch", {
+      name: "teamSelect.scope.internationalFootball",
+    });
+    expect(international).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", { name: "teamSelect.scope.simulate:World Cup" }),
+    ).toBeChecked();
+
+    fireEvent.click(international);
+
+    expect(international).not.toBeChecked();
+    expect(
+      screen.queryByRole("checkbox", { name: "teamSelect.scope.simulate:World Cup" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "teamSelect.scope.apply" }));
+    const draft = handlers.onApply.mock.calls[0][0] as ScopeDraft;
+    expect(draft.internationalFootball).toBe(false);
   });
 });

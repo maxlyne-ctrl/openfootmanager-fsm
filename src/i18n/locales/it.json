@@ -348,7 +348,9 @@
       "needOne": "Attiva almeno una competizione.",
       "summary": "{{regions}} regioni · {{competitions}} competizioni simulate",
       "clubs": "{{clubs}} club nelle regioni simulate",
-      "apply": "Applica"
+      "apply": "Applica",
+      "internationalFootball": "Calcio internazionale",
+      "internationalFootballHint": "Le nazionali, le loro convocazioni e i Mondiali. Disattivato, la carriera è solo di club e procede più veloce."
     },
     "rail": {
       "label": "Paesi e campionati",

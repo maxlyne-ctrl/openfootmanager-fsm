@@ -329,7 +329,9 @@
       "needOne": "Zapněte alespoň jednu soutěž.",
       "summary": "Regionů: {{regions}} · simulovaných soutěží: {{competitions}}",
       "clubs": "Klubů v simulovaných regionech: {{clubs}}",
-      "apply": "Použít"
+      "apply": "Použít",
+      "internationalFootball": "Mezinárodní fotbal",
+      "internationalFootballHint": "Reprezentace, jejich nominace a mistrovství světa. Vypnuto: kariéra má jen klubový fotbal a běží rychleji."
     },
     "rail": {
       "label": "Země a ligy",

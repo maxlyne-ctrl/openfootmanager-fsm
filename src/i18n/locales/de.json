@@ -329,7 +329,9 @@
       "needOne": "Schalte mindestens einen Wettbewerb ein.",
       "summary": "{{regions}} Regionen · {{competitions}} Wettbewerbe simuliert",
       "clubs": "{{clubs}} Vereine in den simulierten Regionen",
-      "apply": "Übernehmen"
+      "apply": "Übernehmen",
+      "internationalFootball": "Länderspiele",
+      "internationalFootballHint": "Nationalmannschaften, ihre Nominierungen und die Weltmeisterschaft. Aus: Die Karriere hat nur Vereinsfußball und läuft schneller."
     },
     "rail": {
       "label": "Länder und Ligen",

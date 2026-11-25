@@ -329,7 +329,9 @@
       "needOne": "Switch on at least one competition.",
       "summary": "{{regions}} regions · {{competitions}} competitions simulated",
       "clubs": "{{clubs}} clubs in the simulated regions",
-      "apply": "Apply"
+      "apply": "Apply",
+      "internationalFootball": "International football",
+      "internationalFootballHint": "National teams, their call-ups and the World Cup. Off makes the career club football only, and quicker to play."
     },
     "rail": {
       "label": "Countries and leagues",

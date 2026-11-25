@@ -329,7 +329,9 @@
       "needOne": "Activa al menos una competición.",
       "summary": "{{regions}} regiones · {{competitions}} competiciones simuladas",
       "clubs": "{{clubs}} clubes en las regiones simuladas",
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "internationalFootball": "Fútbol internacional",
+      "internationalFootballHint": "Selecciones, sus convocatorias y el Mundial. Desactivado, la partida es solo de clubes y avanza más rápido."
     },
     "rail": {
       "label": "Países y ligas",

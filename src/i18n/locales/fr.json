@@ -329,7 +329,9 @@
       "needOne": "Activez au moins une compétition.",
       "summary": "{{regions}} régions · {{competitions}} compétitions simulées",
       "clubs": "{{clubs}} clubs dans les régions simulées",
-      "apply": "Appliquer"
+      "apply": "Appliquer",
+      "internationalFootball": "Football international",
+      "internationalFootballHint": "Les sélections, leurs convocations et la Coupe du monde. Désactivé, la carrière se limite aux clubs et avance plus vite."
     },
     "rail": {
       "label": "Pays et championnats",

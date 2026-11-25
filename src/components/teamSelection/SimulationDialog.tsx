@@ -14,6 +14,7 @@ import {
   competitionState,
   enabledCompetitionIds,
   groupCompetitions,
+  isNationalTeamCompetition,
   lockedRegions,
   type RegionLock,
   type ScopeDraft,
@@ -74,6 +75,12 @@ export default function SimulationDialog({
   // that held focus is gone by then.
   const [focusCompetitionId, setFocusCompetitionId] = useState<string | null>(null);
 
+  const internationalId = `${idBase}-international`;
+  // Without international football the national-team competitions do not exist in the career, so
+  // they are not offered.
+  const listedCompetitions = draft.internationalFootball
+    ? competitions
+    : competitions.filter((competition) => !isNationalTeamCompetition(competition));
   const locks = lockedRegions(draft.homeRegionId, yourCompetitions);
   const active = new Set(activeRegionIds(draft, locks));
   const yourIds = new Set(yourCompetitions.map((competition) => competition.id));
@@ -193,6 +200,24 @@ export default function SimulationDialog({
                 ))}
               </Select>
             </div>
+            <div className="flex min-h-11 items-center gap-2.5 rounded-lg border border-line bg-panel px-3 py-1.5">
+              <Switch
+                labelledBy={internationalId}
+                describedBy={`${internationalId}-hint`}
+                checked={draft.internationalFootball}
+                onChange={(on) =>
+                  setDraft((current) => ({ ...current, internationalFootball: on }))
+                }
+              />
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span id={internationalId} className="font-semibold">
+                  {t("teamSelect.scope.internationalFootball")}
+                </span>
+                <span id={`${internationalId}-hint`} className="text-caption text-fg-subtle">
+                  {t("teamSelect.scope.internationalFootballHint")}
+                </span>
+              </span>
+            </div>
           </section>
 
           <section className="flex flex-col gap-2">
@@ -241,7 +266,7 @@ export default function SimulationDialog({
             {t("teamSelect.scope.sectionCompetitions")}
           </h3>
           <div className="min-h-0 flex-1 overflow-auto border-t border-line">
-            {groupCompetitions(competitions).map((group) => {
+            {groupCompetitions(listedCompetitions).map((group) => {
               const states = group.competitions.map((competition) =>
                 competitionState(competition, draft, yourIds, active),
               );

@@ -329,7 +329,9 @@
       "needOne": "Aktifkan setidaknya satu kompetisi.",
       "summary": "{{regions}} wilayah · {{competitions}} kompetisi disimulasikan",
       "clubs": "{{clubs}} klub di wilayah yang disimulasikan",
-      "apply": "Terapkan"
+      "apply": "Terapkan",
+      "internationalFootball": "Sepak bola internasional",
+      "internationalFootballHint": "Tim nasional, panggilan pemainnya, dan Piala Dunia. Jika dimatikan, karier hanya sepak bola klub dan berjalan lebih cepat."
     },
     "rail": {
       "label": "Negara dan liga",
