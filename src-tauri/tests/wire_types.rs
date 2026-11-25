@@ -45,6 +45,8 @@ fn visit_wire_roots(visitor: &mut impl TypeVisitor) {
     visitor.visit::<ofm_core::slices::managers::ManagersStatus>();
     // `get_custom_tactic_differences` returns it; nothing in `Game` reaches it.
     visitor.visit::<ofm_core::custom_tactics::TacticDifferences>();
+    // `get_ground` returns it; nothing in `Game` reaches it.
+    visitor.visit::<ofm_core::stadium::GroundView>();
 }
 
 /// `u64` would otherwise be `bigint`, but `JSON.parse` hands the screen a `number`.

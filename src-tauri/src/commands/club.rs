@@ -4,6 +4,7 @@ use tauri::State;
 
 use ofm_core::finances;
 use ofm_core::game::Game;
+use ofm_core::stadium::{ground_view, GroundView};
 use ofm_core::state::{Career, StateManager};
 
 use crate::commands::util::mutate_active_game_for;
@@ -51,9 +52,39 @@ pub fn upgrade_facility_internal(
     })
 }
 
+/// The ground screen's view of a club's ground. `team_id` defaults to the manager's club.
+#[tauri::command]
+pub fn get_ground(
+    state: State<'_, Arc<StateManager>>,
+    team_id: Option<String>,
+) -> Result<GroundView, String> {
+    get_ground_internal(&state, team_id.as_deref())
+}
+
+pub fn get_ground_internal(
+    state: &StateManager,
+    team_id: Option<&str>,
+) -> Result<GroundView, String> {
+    state
+        .get_game(|game| {
+            let team_id = match team_id {
+                Some(team_id) => team_id.to_string(),
+                None => game
+                    .manager
+                    .team_id
+                    .clone()
+                    .ok_or_else(|| "be.error.noTeamAssigned".to_string())?,
+            };
+            // Every club is given a ground on new game and on load, so a club without one is a
+            // club that does not exist.
+            ground_view(&game.teams, &team_id).ok_or_else(|| "be.error.teamNotFound".to_string())
+        })
+        .ok_or_else(|| "be.error.noActiveGameSession".to_string())?
+}
+
 #[cfg(test)]
 mod tests {
-    use super::upgrade_facility_internal;
+    use super::{get_ground_internal, upgrade_facility_internal};
     use chrono::{TimeZone, Utc};
     use domain::manager::Manager;
     use domain::player::{Player, PlayerAttributes, Position};
@@ -215,5 +246,42 @@ mod tests {
         assert_eq!(result.err(), Some("be.error.careerChanged".to_string()));
         let after = crate::commands::game_json::active_game_json(&state);
         assert_eq!(after, before);
+    }
+
+    /// Given a career whose club has a ground,
+    /// When the ground is asked for without naming a club,
+    /// Then the manager's club's ground comes back, its figures counted from its layout.
+    #[test]
+    fn the_ground_screen_shows_the_managers_club_by_default() {
+        let state = StateManager::new();
+        state.set_game(make_game());
+
+        let view = get_ground_internal(&state, None).expect("the club's ground");
+
+        assert_eq!(view.team_id, "team-1");
+        assert_eq!(view.stadium_name, "User Ground");
+        assert_eq!(
+            view.figures,
+            ofm_core::stadium::stadium_figures(&view.layout)
+        );
+    }
+
+    /// Given no game loaded, or a club that does not exist,
+    /// When a ground is asked for,
+    /// Then the answer is the error key the screen translates.
+    #[test]
+    fn a_ground_that_cannot_be_found_is_a_translatable_error() {
+        let empty = StateManager::new();
+        assert_eq!(
+            get_ground_internal(&empty, None).unwrap_err(),
+            "be.error.noActiveGameSession"
+        );
+
+        let state = StateManager::new();
+        state.set_game(make_game());
+        assert_eq!(
+            get_ground_internal(&state, Some("nobody")).unwrap_err(),
+            "be.error.teamNotFound"
+        );
     }
 }

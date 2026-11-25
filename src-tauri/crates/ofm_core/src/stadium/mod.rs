@@ -11,7 +11,10 @@ mod names;
 pub use figures::{StadiumFigures, stadium_figures};
 pub use generator::{StadiumBrief, generate_stadium_layout};
 
+use domain::stadium::StadiumLayout;
 use domain::team::Team;
+use serde::Serialize;
+use ts_rs::TS;
 
 use crate::seed::rng_from_u64;
 use crate::stable_hash::stable_hash;
@@ -44,6 +47,27 @@ pub fn backfill_stadium_layouts(teams: &mut [Team]) -> bool {
         changed |= capacity_follows_ground(team);
     }
     changed
+}
+
+/// A club's ground as the ground screen shows it: the layout, and what the game counts from it.
+#[derive(Debug, Clone, PartialEq, Serialize, TS)]
+pub struct GroundView {
+    pub team_id: String,
+    pub stadium_name: String,
+    pub layout: StadiumLayout,
+    pub figures: StadiumFigures,
+}
+
+/// The ground of the club `team_id`, or `None` for an unknown club or one with no ground yet.
+pub fn ground_view(teams: &[Team], team_id: &str) -> Option<GroundView> {
+    let team = teams.iter().find(|team| team.id == team_id)?;
+    let layout = team.stadium_layout.clone()?;
+    Some(GroundView {
+        team_id: team.id.clone(),
+        stadium_name: team.stadium_name.clone(),
+        figures: stadium_figures(&layout),
+        layout,
+    })
 }
 
 /// Set a club's capacity to what its ground holds. Returns whether it changed.
@@ -119,6 +143,33 @@ mod tests {
 
         assert!(backfill_stadium_layouts(&mut teams));
         assert_eq!(teams[0].stadium_capacity, built);
+    }
+
+    /// Given a game whose clubs have grounds, when one club's ground is asked for, then the view
+    /// carries its name, its layout and the figures the game counts from it.
+    #[test]
+    fn a_clubs_ground_view_is_its_layout_and_what_it_holds() {
+        let mut teams = vec![team("home", 12_000), team("away", 30_000)];
+        backfill_stadium_layouts(&mut teams);
+
+        let view = ground_view(&teams, "home").expect("a ground");
+
+        let layout = teams[0].stadium_layout.clone().expect("a ground");
+        assert_eq!(view.team_id, "home");
+        assert_eq!(view.stadium_name, "Ground");
+        assert_eq!(view.figures, stadium_figures(&layout));
+        assert_eq!(view.figures.capacity, teams[0].stadium_capacity);
+        assert_eq!(view.layout, layout);
+    }
+
+    /// Given a club that does not exist, or one with no ground yet, when its ground is asked
+    /// for, then there is none to show.
+    #[test]
+    fn there_is_no_ground_view_without_a_club_and_a_ground() {
+        let teams = vec![team("unbuilt", 5_000)];
+
+        assert!(ground_view(&teams, "nobody").is_none());
+        assert!(ground_view(&teams, "unbuilt").is_none());
     }
 
     /// Given a club that already has a ground, when grounds are backfilled,
