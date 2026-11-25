@@ -544,7 +544,8 @@ mod tests {
     /// Given an imported world whose author gave no staff and whose clubs have no cash,
     /// When a game is built from it as an imported world and, separately, as a generated one,
     /// Then the imported game has a backroom for every club and cash for its wage bill; the
-    ///      generated build is left as the world was.
+    ///      generated build is given no backroom, and its cash is what the league economy opens
+    ///      a club with: a quarter of its season's revenue.
     #[test]
     fn an_imported_world_is_prepared_for_a_career_and_a_generated_one_is_not() {
         let sources = DefinitionSources::embedded_only();
@@ -589,7 +590,19 @@ mod tests {
             "every club has a backroom"
         );
         assert_eq!(employed(&generated), 0);
-        let cash = |game: &Game| game.teams.iter().map(|team| team.finance).sum::<i64>();
-        assert!(cash(&imported) > cash(&generated));
+        assert!(imported.teams.iter().all(|team| team.finance > 0));
+        let economies = crate::league_economy::club_economies(&generated);
+        for team in generated
+            .teams
+            .iter()
+            .filter(|t| economies.contains_key(&t.id))
+        {
+            assert_eq!(
+                team.finance,
+                economies[&team.id].revenue_target / 4,
+                "{}",
+                team.id
+            );
+        }
     }
 }

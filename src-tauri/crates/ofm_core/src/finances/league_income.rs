@@ -21,6 +21,18 @@ pub(super) fn weekly_league_income(club: &ClubEconomy) -> (i64, i64) {
     (broadcast, commercial)
 }
 
+/// What a club keeps of its revenue after wages and running costs, for the transfer market and
+/// the bank: UEFA's top divisions spend 47% of revenue on player wages and 36% on other running
+/// costs (ECFIL 2025), which leaves about a tenth once the rest of the wage bill is counted.
+pub(crate) const MARGIN_PERCENT: i64 = 10;
+
+/// A week of `club`'s running costs: the stadium, the staff who are not players, travel,
+/// administration.
+pub(super) fn weekly_running_costs(club: &ClubEconomy) -> i64 {
+    let share = 100 - i64::from(club.league.wage_ratio_percent) - MARGIN_PERCENT;
+    club.revenue_target.saturating_mul(share.max(0)) / 100 / WEEKS_PER_YEAR
+}
+
 /// Prize money for finishing `position` (1 is first) of `clubs` in a league with this economy.
 /// The league's merit pot is split in steps from first to last: first takes `clubs` shares,
 /// last takes one.
@@ -122,6 +134,25 @@ mod tests {
             paid(&game, "bbb-giant", CashKind::Broadcasting)
                 > paid(&game, "aaa-small", CashKind::Broadcasting)
         );
+    }
+
+    /// Given a career on the league economy, in England's top flight
+    /// When a week's finances are processed
+    /// Then each club pays a week of running costs: what is left of its revenue target once its
+    ///      league's wage share and a tenth for the transfer market are set aside.
+    #[test]
+    fn a_week_on_the_league_economy_pays_the_running_costs() {
+        let mut game = english_game(EconomyModel::Leagues);
+        let giant = crate::league_economy::club_economy(&game, "bbb-giant").unwrap();
+
+        crate::finances::process_weekly_finances(&mut game);
+
+        let expected = giant.revenue_target
+            * (100 - i64::from(giant.league.wage_ratio_percent) - MARGIN_PERCENT)
+            / 100
+            / WEEKS_PER_YEAR;
+        assert_eq!(weekly_running_costs(&giant), expected);
+        assert!(paid(&game, "bbb-giant", CashKind::Upkeep) <= -expected);
     }
 
     /// Given a career on the old economy

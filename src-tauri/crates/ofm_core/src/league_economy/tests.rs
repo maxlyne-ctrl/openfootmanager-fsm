@@ -540,3 +540,101 @@ fn opening_a_package_keeps_its_players_as_authored() {
         .collect();
     assert_eq!(after, before);
 }
+
+/// Given a sixteen-year-old recruit of the most famous top-flight club, and one of a
+///      second-division club, each drawn at 45 with a ceiling of 70
+/// When each arrives in a league economy career
+/// Then the famous club's is moved up and the other's down, the famous club's with more room
+///      to grow, and both are valued and paid on the market's curves.
+#[test]
+fn a_recruit_is_brought_to_his_clubs_standard_and_priced_on_the_curves() {
+    let mut game = english_game();
+    game.economy = EconomyModel::Leagues;
+    let mut giant = squad_player("giant-kid", Some("bbb-giant"), 45, 70);
+    let mut second = squad_player("second-kid", Some("eee-second"), 45, 70);
+    let (giant_before, second_before) = (giant.ovr, second.ovr);
+
+    fit_newcomer(&game, &mut giant);
+    fit_newcomer(&game, &mut second);
+
+    assert!(
+        giant.ovr > giant_before + 3,
+        "{giant_before} -> {}",
+        giant.ovr
+    );
+    assert!(
+        second.ovr <= second_before + 1,
+        "{second_before} -> {}",
+        second.ovr
+    );
+    for player in [&giant, &second] {
+        assert_eq!(player.wage(), weekly_wage_for(player.ovr));
+    }
+    // The ceiling moves by the whole gap to the club's standard and the rating by half of it,
+    // so a rich academy's recruit has more room to grow than a poor one's.
+    let headroom = |p: &domain::player::Player| i32::from(p.potential) - i32::from(p.ovr);
+    assert!(headroom(&giant) > 25, "giant headroom {}", headroom(&giant));
+    assert!(headroom(&giant) > headroom(&second));
+}
+
+/// Given a free agent generated for a national pool
+/// When he arrives in a league economy career
+/// Then his rating is his own, and he is valued and paid on the market's curves.
+#[test]
+fn a_free_agent_keeps_his_rating_and_is_priced_on_the_curves() {
+    let mut game = english_game();
+    game.economy = EconomyModel::Leagues;
+    let mut free = squad_player("pool", None, 67, 67);
+    free.market_value = 1;
+    let rating = free.ovr;
+
+    fit_newcomer(&game, &mut free);
+
+    assert_eq!(free.ovr, rating);
+    assert_eq!(free.wage(), weekly_wage_for(rating));
+    assert!(free.market_value > 1);
+}
+
+/// Given a recruit in a career on the old economy
+/// When he arrives
+/// Then he is left exactly as generated.
+#[test]
+fn a_newcomer_on_the_old_economy_is_left_as_generated() {
+    let game = english_game();
+    let mut recruit = squad_player("kid", Some("bbb-giant"), 45, 70);
+    let before = (
+        recruit.ovr,
+        recruit.potential,
+        recruit.market_value,
+        recruit.wage(),
+    );
+
+    fit_newcomer(&game, &mut recruit);
+
+    assert_eq!(
+        (
+            recruit.ovr,
+            recruit.potential,
+            recruit.market_value,
+            recruit.wage()
+        ),
+        before
+    );
+}
+
+/// Given a prospect a scout found for the most famous top-flight club, belonging to no club yet
+/// When he is fitted to the league economy
+/// Then he is drawn to that club's standard, as its own recruit would be.
+#[test]
+fn a_scouted_prospect_is_drawn_to_the_standard_of_the_club_that_found_him() {
+    let mut game = english_game();
+    game.economy = EconomyModel::Leagues;
+    let mut recruit = squad_player("kid", Some("bbb-giant"), 45, 70);
+    let mut prospect = squad_player("found", None, 45, 70);
+
+    fit_newcomer(&game, &mut recruit);
+    fit_prospect(&game, "bbb-giant", &mut prospect);
+
+    assert_eq!(prospect.ovr, recruit.ovr);
+    assert!(prospect.team_id.is_none());
+}

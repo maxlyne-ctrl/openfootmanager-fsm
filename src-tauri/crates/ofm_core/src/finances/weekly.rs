@@ -115,6 +115,15 @@ pub(super) fn weekly_posts_by_club(
             ));
         }
         if let Some(economy) = league_economies.get(&team.id) {
+            let running_costs = super::league_income::weekly_running_costs(economy);
+            if running_costs > 0 {
+                reqs.push(PostRequest::new(
+                    &team.id,
+                    -running_costs,
+                    CashKind::Upkeep,
+                    post_date,
+                ));
+            }
             let (broadcast, commercial) = super::league_income::weekly_league_income(economy);
             for (amount, kind) in [
                 (broadcast, CashKind::Broadcasting),

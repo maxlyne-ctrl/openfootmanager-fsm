@@ -3,7 +3,10 @@
 //! real-world budgets by league. Each row also prints the league's target from
 //! `ofm_core::league_economy`, so the two can be compared.
 //!
-//! Usage: `finance_audit [gate|shipped]`
+//! With a season count, it also prints each league's average squad rating, average cash and clubs
+//! in the red at every season end, so drift over a career shows.
+//!
+//! Usage: `finance_audit [gate|shipped] [seasons]`
 
 use domain::finance::CashKind;
 use domain::league::CompetitionType;
@@ -11,8 +14,54 @@ use season_harness::driver::{RunOptions, SeasonObserver, run_seasons};
 use season_harness::worlds::{Scope, WorldSpec};
 use std::collections::HashMap;
 
-struct NoObserver;
-impl SeasonObserver for NoObserver {}
+/// Each league at each season end: squad rating, cash and clubs in the red.
+struct SeasonTrend;
+
+impl SeasonObserver for SeasonTrend {
+    fn on_season_end(
+        &mut self,
+        game: &ofm_core::game::Game,
+        _summary: &ofm_core::end_of_season::EndOfSeasonSummary,
+        season: u32,
+    ) {
+        let economies = ofm_core::league_economy::club_economies(game);
+        let mut rating: HashMap<&str, (f64, f64)> = HashMap::new();
+        for player in &game.players {
+            if let Some(club) = player.team_id.as_deref() {
+                let entry = rating.entry(club).or_default();
+                entry.0 += f64::from(player.ovr);
+                entry.1 += 1.0;
+            }
+        }
+        let mut leagues: HashMap<&str, (f64, i64, i64, i64)> = HashMap::new();
+        for team in &game.teams {
+            let Some(economy) = economies.get(&team.id) else {
+                continue;
+            };
+            let entry = leagues.entry(economy.league_id.as_str()).or_default();
+            let (sum, count) = rating.get(team.id.as_str()).copied().unwrap_or((0.0, 1.0));
+            entry.0 += sum / count.max(1.0);
+            entry.1 += team.finance;
+            entry.2 += i64::from(team.finance < 0);
+            entry.3 += 1;
+        }
+        let names: HashMap<&str, &str> = game
+            .competitions
+            .iter()
+            .map(|c| (c.id.as_str(), c.name.as_str()))
+            .collect();
+        let mut rows: Vec<_> = leagues.into_iter().collect();
+        rows.sort_by_key(|row| std::cmp::Reverse(row.1.1));
+        for (league, (rating, cash, red, clubs)) in rows {
+            println!(
+                "trend\t{season}\t{}\t{:.1}\t{}\t{red}/{clubs}",
+                names.get(league).copied().unwrap_or(league),
+                rating / clubs as f64,
+                cash / clubs,
+            );
+        }
+    }
+}
 
 #[derive(Default)]
 struct LeagueTotals {
@@ -65,7 +114,8 @@ fn main() -> Result<(), String> {
             entry.1 += 1;
         }
     }
-    run_seasons(&mut game, RunOptions::seasons(1), &mut NoObserver)
+    let seasons: u32 = args.get(2).and_then(|n| n.parse().ok()).unwrap_or(1);
+    run_seasons(&mut game, RunOptions::seasons(seasons), &mut SeasonTrend)
         .map_err(|error| format!("{error:?}"))?;
 
     let mut totals: HashMap<(String, String), LeagueTotals> = HashMap::new();

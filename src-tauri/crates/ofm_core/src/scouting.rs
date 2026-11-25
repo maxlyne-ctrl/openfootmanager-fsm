@@ -506,6 +506,13 @@ fn complete_youth_scouting_assignment(
     if prospects.is_empty() {
         return;
     }
+    let prospects: Vec<Player> = prospects
+        .into_iter()
+        .map(|mut prospect| {
+            crate::league_economy::fit_prospect(game, &team.id, &mut prospect);
+            prospect
+        })
+        .collect();
 
     let scout_name = format!("{} {}", scout.first_name, scout.last_name);
     let mut report = build_youth_recruitment_report(

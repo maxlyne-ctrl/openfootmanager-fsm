@@ -183,7 +183,7 @@ fn draw_recruits(game: &Game, team_index: usize, plan: &IntakePlan, date: NaiveD
         .iter()
         .filter_map(|group| {
             let age = rng.random_range(INTAKE_AGES);
-            let recruit = crate::generator::generate_youth_intake_recruit(
+            let mut recruit = crate::generator::generate_youth_intake_recruit(
                 team,
                 &reputations,
                 group,
@@ -191,6 +191,7 @@ fn draw_recruits(game: &Game, team_index: usize, plan: &IntakePlan, date: NaiveD
                 date.year() as u32,
                 &mut rng,
             );
+            crate::league_economy::fit_newcomer(game, &mut recruit);
             let own_terms = recruit
                 .contract_end()
                 .and_then(crate::contracts::parse_contract_date)
