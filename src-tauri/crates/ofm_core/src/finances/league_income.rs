@@ -23,8 +23,9 @@ pub(super) fn weekly_league_income(club: &ClubEconomy) -> (i64, i64) {
 
 /// What a club keeps of its revenue after wages and running costs, for the transfer market and
 /// the bank: UEFA's top divisions spend 47% of revenue on player wages and 36% on other running
-/// costs (ECFIL 2025), which leaves about a tenth once the rest of the wage bill is counted.
-pub(crate) const MARGIN_PERCENT: i64 = 10;
+/// costs (ECFIL 2025), which leaves a few per cent once the rest of the wage bill is counted. At
+/// a tenth, top-flight clubs banked about EUR 40m a season each over six seasons (finance_audit).
+pub(crate) const MARGIN_PERCENT: i64 = 5;
 
 /// A week of `club`'s running costs: the stadium, the staff who are not players, travel,
 /// administration.
@@ -139,7 +140,7 @@ mod tests {
     /// Given a career on the league economy, in England's top flight
     /// When a week's finances are processed
     /// Then each club pays a week of running costs: what is left of its revenue target once its
-    ///      league's wage share and a tenth for the transfer market are set aside.
+    ///      league's wage share and a margin for the transfer market are set aside.
     #[test]
     fn a_week_on_the_league_economy_pays_the_running_costs() {
         let mut game = english_game(EconomyModel::Leagues);

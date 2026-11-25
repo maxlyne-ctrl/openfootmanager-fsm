@@ -269,7 +269,7 @@ fn no_ground_is_bigger_than_the_biggest_or_smaller_than_a_stand() {
 fn opening_a_world_fits_every_ground_to_its_league() {
     let mut game = english_game();
 
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
 
     assert_eq!(game.economy, EconomyModel::Leagues);
     let capacity = |id: &str| {
@@ -280,29 +280,6 @@ fn opening_a_world_fits_every_ground_to_its_league() {
     };
     assert!(capacity("bbb-giant") > capacity("ddd-second"));
     assert!(capacity("ddd-second") > 5_000);
-}
-
-/// Given the same world, as an imported package whose authors set its grounds
-/// When it is opened on the league economy keeping its grounds
-/// Then the career is on the league economy and every capacity is as it was.
-#[test]
-fn opening_a_package_keeps_the_grounds_its_authors_set() {
-    let mut game = english_game();
-    let before: Vec<u32> = game
-        .teams
-        .iter()
-        .map(|team| team.stadium_capacity)
-        .collect();
-
-    open_league_economy(&mut game, GroundPolicy::KeepAuthored);
-
-    assert_eq!(game.economy, EconomyModel::Leagues);
-    let after: Vec<u32> = game
-        .teams
-        .iter()
-        .map(|team| team.stadium_capacity)
-        .collect();
-    assert_eq!(after, before);
 }
 
 /// Given England's two divisions
@@ -376,7 +353,7 @@ fn squad_average(game: &Game, club: &str) -> f64 {
 fn opening_a_world_rates_every_squad_by_its_money() {
     let mut game = english_game_with_squads();
 
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
 
     let economies = club_economies(&game);
     for club in ["bbb-giant", "ddd-second", "fff-nowhere"] {
@@ -406,7 +383,7 @@ fn a_player_keeps_his_headroom_when_his_squad_is_moved() {
         .cloned()
         .unwrap();
 
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
 
     let after = game
         .players
@@ -429,7 +406,7 @@ fn a_player_keeps_his_headroom_when_his_squad_is_moved() {
 fn opening_a_world_values_every_player_on_the_market_curve() {
     let mut game = english_game_with_squads();
 
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
 
     for player in &game.players {
         assert_eq!(
@@ -451,7 +428,7 @@ fn opening_a_world_values_every_player_on_the_market_curve() {
 fn opening_a_world_pays_each_squad_its_leagues_share_of_its_money() {
     let mut game = english_game_with_squads();
 
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
 
     let economies = club_economies(&game);
     for (club, economy) in &economies {
@@ -484,7 +461,7 @@ fn opening_a_world_pays_each_squad_its_leagues_share_of_its_money() {
 fn opening_a_world_sets_every_clubs_budgets_from_its_money() {
     let mut game = english_game_with_squads();
 
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
 
     let economies = club_economies(&game);
     for team in game
@@ -518,28 +495,6 @@ fn opening_a_world_sets_every_clubs_budgets_from_its_money() {
             .transfer_budget
     };
     assert!(budget("bbb-giant") > budget("ddd-second"));
-}
-
-/// Given the same world, as an imported package
-/// When it is opened keeping what its authors set
-/// Then no player's rating, value or wage changes.
-#[test]
-fn opening_a_package_keeps_its_players_as_authored() {
-    let mut game = english_game_with_squads();
-    let before: Vec<(u8, u64, u32)> = game
-        .players
-        .iter()
-        .map(|p| (p.ovr, p.market_value, p.wage()))
-        .collect();
-
-    open_league_economy(&mut game, GroundPolicy::KeepAuthored);
-
-    let after: Vec<(u8, u64, u32)> = game
-        .players
-        .iter()
-        .map(|p| (p.ovr, p.market_value, p.wage()))
-        .collect();
-    assert_eq!(after, before);
 }
 
 /// Given a sixteen-year-old recruit of the most famous top-flight club, and one of a
@@ -646,7 +601,7 @@ fn a_scouted_prospect_is_drawn_to_the_standard_of_the_club_that_found_him() {
 #[test]
 fn a_players_market_wage_is_what_his_club_pays_for_his_rating() {
     let mut game = english_game_with_squads();
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
 
     let economies = club_economies(&game);
     for player in game.players.iter().filter(|p| p.team_id.is_some()) {
@@ -671,7 +626,7 @@ fn a_players_market_wage_is_what_his_club_pays_for_his_rating() {
 #[test]
 fn a_fading_players_market_wage_falls_with_his_rating() {
     let mut game = english_game_with_squads();
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
     let index = game
         .players
         .iter()
@@ -711,7 +666,7 @@ fn there_is_no_market_wage_off_the_league_economy() {
 #[test]
 fn a_new_season_turns_a_hoard_into_a_transfer_budget() {
     let mut game = english_game_with_squads();
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
     let giant = club_economy(&game, "bbb-giant").unwrap();
     let revenue = giant.revenue_target;
     let index = game.teams.iter().position(|t| t.id == "bbb-giant").unwrap();
@@ -736,7 +691,7 @@ fn a_new_season_turns_a_hoard_into_a_transfer_budget() {
 #[test]
 fn a_club_short_of_cash_has_no_more_to_spend_than_it_holds() {
     let mut game = english_game_with_squads();
-    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    open_league_economy(&mut game);
     let index = game
         .teams
         .iter()

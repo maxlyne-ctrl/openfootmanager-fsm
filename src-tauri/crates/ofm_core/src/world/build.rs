@@ -37,14 +37,10 @@ pub fn build_game_from_imported_world(
     let opening_year = u32::try_from(clock.start_date.year())
         .unwrap_or_else(|_| crate::generator::default_opening_year());
     crate::generator::normalize_imported_world_for_career_start(&mut world, opening_year);
-    let (mut game, stats) =
-        build_game_before_the_economy(clock, manager, history, world, reputation_basis);
-    // Its authors set its grounds, so its money follows the league but its stands stay theirs.
-    crate::league_economy::open_league_economy(
-        &mut game,
-        crate::league_economy::GroundPolicy::KeepAuthored,
-    );
-    (game, stats)
+    // Its authors set its players, wages and money, so it stays on the old economy: the league
+    // economy's income on top of authored wages would leave every club in a surplus. A package
+    // that declares its own money can open on the league economy once packages can say so.
+    build_game_before_the_economy(clock, manager, history, world, reputation_basis)
 }
 
 /// Builds the game for `world`, resolving its competition definitions with clubs ranked by
@@ -58,11 +54,9 @@ pub fn build_game_from_world_data(
 ) -> (Game, StatsState) {
     let (mut game, stats) =
         build_game_before_the_economy(clock, manager, history, world, reputation_basis);
-    // A generated world's grounds were drawn at random, so they are rebuilt to their leagues.
-    crate::league_economy::open_league_economy(
-        &mut game,
-        crate::league_economy::GroundPolicy::FitToLeague,
-    );
+    // A generated world's grounds, squads and money were drawn at random, so they are rebuilt
+    // to their leagues.
+    crate::league_economy::open_league_economy(&mut game);
     (game, stats)
 }
 
@@ -539,6 +533,31 @@ mod tests {
             .collect();
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].retired_on, "2030-06-30");
+    }
+
+    /// Given an imported world, as a package is
+    /// When a game is built from it
+    /// Then the career stays on the old economy: its authors set its players, wages and money,
+    ///      and the league economy's income on top of them would leave every club in a surplus.
+    #[test]
+    fn an_imported_world_stays_on_the_old_economy() {
+        let sources = DefinitionSources::embedded_only();
+        let world = generate_world_data_seeded_with(5, &WorldGenConfig::compact(), &sources);
+        let clock = GameClock::new(start_date_for_year(2033).unwrap());
+        let history = PastHistory {
+            start_year: 2033,
+            depth_years: 0,
+        };
+
+        let (game, _) = build_game_from_imported_world(
+            clock,
+            manager(),
+            history,
+            world,
+            ReputationBasis::Stored,
+        );
+
+        assert_eq!(game.economy, crate::league_economy::EconomyModel::Legacy);
     }
 
     /// Given an imported world whose author gave no staff and whose clubs have no cash,

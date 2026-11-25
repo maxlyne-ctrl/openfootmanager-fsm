@@ -8,21 +8,11 @@ use super::{EconomyModel, club_economies, ground_capacity_for};
 /// 15 to 17), so a small test league is not sized for two games a year.
 const FEWEST_HOME_GAMES: u32 = 15;
 
-/// What opening a world does to its grounds.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GroundPolicy {
-    /// A generated world: every ground is rebuilt to the size its club's matchday money supports.
-    FitToLeague,
-    /// An imported world: its authors set the grounds, and they stand.
-    KeepAuthored,
-}
-
-/// Put a newly built world on the league economy.
-pub fn open_league_economy(game: &mut Game, grounds: GroundPolicy) {
+/// Put a newly generated world on the league economy: every ground rebuilt to the size its
+/// club's matchday money supports, every squad to the rating its money buys, and every price and
+/// budget to the market's.
+pub fn open_league_economy(game: &mut Game) {
     game.economy = EconomyModel::Leagues;
-    if grounds == GroundPolicy::KeepAuthored {
-        return;
-    }
     let economies = club_economies(game);
     let league_sizes: std::collections::HashMap<&str, u32> = game
         .competitions
