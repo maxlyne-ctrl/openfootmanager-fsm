@@ -61,6 +61,10 @@ pub struct GameMeta {
     /// `Game::international_football`. NULL, a save from before v069, reads as on.
     #[serde(default = "default_international_football")]
     pub international_football: bool,
+    /// `Game::economy`, as `EconomyModel::as_str` names it. NULL, a save from before v070,
+    /// reads as the old economy.
+    #[serde(default)]
+    pub economy: Option<String>,
 }
 
 fn default_international_football() -> bool {
@@ -122,8 +126,8 @@ fn default_package_lockfile_json() -> String {
 /// Insert or replace the singleton game_meta row.
 pub fn upsert_meta(conn: &Connection, meta: &GameMeta) -> Result<(), String> {
     conn.execute(
-        "INSERT OR REPLACE INTO game_meta (id, save_id, save_name, manager_id, start_date, game_date, created_at, last_played_at, vacant_team_days_json, world_history_json, available_staff_market_last_activity_date, save_format_version, world_format_version, app_version, source_world_id, source_world_kind, active_region_ids_json, active_competition_ids_json, extra_translations_json, package_lockfile_json, emitted_events_json, seed, legacy_world_cup_draw, legacy_tactics_imported, gate_settled_from, last_season_rollover_on, days_since_last_job_offer, international_football)
-         VALUES ('singleton', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27)",
+        "INSERT OR REPLACE INTO game_meta (id, save_id, save_name, manager_id, start_date, game_date, created_at, last_played_at, vacant_team_days_json, world_history_json, available_staff_market_last_activity_date, save_format_version, world_format_version, app_version, source_world_id, source_world_kind, active_region_ids_json, active_competition_ids_json, extra_translations_json, package_lockfile_json, emitted_events_json, seed, legacy_world_cup_draw, legacy_tactics_imported, gate_settled_from, last_season_rollover_on, days_since_last_job_offer, international_football, economy)
+         VALUES ('singleton', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25, ?26, ?27, ?28)",
         params![
             meta.save_id,
             meta.save_name,
@@ -152,6 +156,7 @@ pub fn upsert_meta(conn: &Connection, meta: &GameMeta) -> Result<(), String> {
             meta.last_season_rollover_on,
             meta.days_since_last_job_offer,
             meta.international_football,
+            meta.economy,
         ],
     )
     .map_err(|_| GAME_PERSISTENCE_WRITE_ERROR.to_string())?;
@@ -163,7 +168,7 @@ pub fn load_meta(conn: &Connection) -> Result<Option<GameMeta>, String> {
     let mut stmt = conn
         .prepare(
             "SELECT save_id, save_name, manager_id, start_date, game_date, created_at, last_played_at, vacant_team_days_json, world_history_json, available_staff_market_last_activity_date, save_format_version, world_format_version, app_version, source_world_id, source_world_kind, active_region_ids_json, active_competition_ids_json, extra_translations_json, package_lockfile_json, emitted_events_json, seed, legacy_world_cup_draw, legacy_tactics_imported, gate_settled_from, last_season_rollover_on, days_since_last_job_offer,
-                    COALESCE(international_football, 1)
+                    COALESCE(international_football, 1), economy
              FROM game_meta WHERE id = 'singleton'",
         )
         .map_err(|_| GAME_PERSISTENCE_LOAD_ERROR.to_string())?;
@@ -208,6 +213,7 @@ pub fn load_meta(conn: &Connection) -> Result<Option<GameMeta>, String> {
                 last_season_rollover_on: row.get(24)?,
                 days_since_last_job_offer: row.get(25)?,
                 international_football: row.get(26)?,
+                economy: row.get(27)?,
             })
         })
         .map_err(|_| GAME_PERSISTENCE_LOAD_ERROR.to_string())?;
@@ -259,6 +265,7 @@ mod tests {
             last_season_rollover_on: None,
             days_since_last_job_offer: None,
             international_football: true,
+            economy: None,
         };
 
         upsert_meta(db.conn(), &meta).unwrap();
@@ -313,6 +320,7 @@ mod tests {
             last_season_rollover_on: None,
             days_since_last_job_offer: None,
             international_football: true,
+            economy: None,
         };
         upsert_meta(db.conn(), &meta1).unwrap();
 
@@ -344,6 +352,7 @@ mod tests {
             last_season_rollover_on: None,
             days_since_last_job_offer: None,
             international_football: true,
+            economy: None,
         };
         upsert_meta(db.conn(), &meta2).unwrap();
 
@@ -388,6 +397,7 @@ mod tests {
             last_season_rollover_on: None,
             days_since_last_job_offer: None,
             international_football: true,
+            economy: None,
         };
 
         let result = upsert_meta(&conn, &meta);

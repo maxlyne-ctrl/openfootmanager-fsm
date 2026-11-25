@@ -16,9 +16,42 @@ mod tests;
 
 use std::collections::HashMap;
 
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
 use crate::game::Game;
 
 pub use spread::revenue_spread;
+
+/// Which economy a career's money follows.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]
+#[serde(rename_all = "snake_case")]
+pub enum EconomyModel {
+    /// The flat economy every career before the league economy was played on: the same ticket
+    /// prices and grounds everywhere, no broadcasting. Frozen; kept only so those saves play on.
+    #[default]
+    Legacy,
+    /// Money follows the league: [`club_economies`] sets each club's revenue target.
+    Leagues,
+}
+
+impl EconomyModel {
+    /// The name stored in the save.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Legacy => "legacy",
+            Self::Leagues => "leagues",
+        }
+    }
+
+    /// The model a stored name names; anything unknown, including no name, is the old economy.
+    pub fn from_stored(name: Option<&str>) -> Self {
+        match name {
+            Some("leagues") => Self::Leagues,
+            _ => Self::Legacy,
+        }
+    }
+}
 
 /// Where a league's figure came from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

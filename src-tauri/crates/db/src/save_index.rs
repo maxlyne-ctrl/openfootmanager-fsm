@@ -500,6 +500,7 @@ mod tests {
                 last_season_rollover_on: None,
                 days_since_last_job_offer: None,
                 international_football: true,
+                economy: None,
             },
         )
         .unwrap();
@@ -631,6 +632,7 @@ mod tests {
                 last_season_rollover_on: None,
                 days_since_last_job_offer: None,
                 international_football: true,
+                economy: None,
             },
         )
         .unwrap();

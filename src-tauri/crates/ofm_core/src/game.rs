@@ -268,6 +268,10 @@ pub struct Game {
     /// had international football, so it keeps it.
     #[serde(default = "international_football_by_default")]
     pub international_football: bool,
+    /// Which economy the career's money follows. A save from before the league economy keeps
+    /// the one it was played on; a new world is opened on the league economy as it is built.
+    #[serde(default)]
+    pub economy: crate::league_economy::EconomyModel,
     /// Which engine plays fixtures nobody is watching. Not saved: every game
     /// starts on [`UnwatchedMatchEngine::default`]. A tooling switch for now
     /// (benchmarks, the season harness); a player-facing setting would need
@@ -361,6 +365,7 @@ impl Game {
             cash_journal_dirty_ids: Vec::new(),
             squad_floor_top_ups: Vec::new(),
             international_football: true,
+            economy: Default::default(),
             unwatched_match_engine: Default::default(),
         };
         game.promote_legacy_league();
@@ -649,6 +654,21 @@ mod tests {
         let game: Game = serde_json::from_value(value).unwrap();
 
         assert!(game.international_football);
+    }
+
+    /// Given a save written before the league economy existed, on any economy
+    /// When it is read
+    /// Then it is on the old economy: a career is never moved to the new one mid-play.
+    #[test]
+    fn a_save_from_before_the_league_economy_stays_on_the_old_one() {
+        let mut game = game_with_only_a_legacy_league();
+        game.economy = crate::league_economy::EconomyModel::Leagues;
+        let mut value = serde_json::to_value(game).unwrap();
+        value.as_object_mut().unwrap().remove("economy");
+
+        let game: Game = serde_json::from_value(value).unwrap();
+
+        assert_eq!(game.economy, crate::league_economy::EconomyModel::Legacy);
     }
 
     #[test]
