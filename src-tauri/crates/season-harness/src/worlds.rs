@@ -2,6 +2,7 @@
 //! builds one, and given a pyramid by the same builder every new career uses, with the manager in
 //! charge of a club.
 
+use ofm_core::league_economy::{EconomyModel, GroundPolicy, open_league_economy};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU32, Ordering};
 
@@ -72,6 +73,9 @@ pub struct WorldSpec {
     pub package: Option<PathBuf>,
     /// Whether the career has national teams and international competitions.
     pub international_football: bool,
+    /// The economy the career's money follows: the league economy, as a new career in the app
+    /// opens on, or the old flat one, to compare against it.
+    pub economy: EconomyModel,
 }
 
 impl WorldSpec {
@@ -86,6 +90,7 @@ impl WorldSpec {
             scope: Scope::Followed,
             package: None,
             international_football: true,
+            economy: EconomyModel::Leagues,
         }
     }
 
@@ -150,6 +155,9 @@ impl WorldSpec {
             ReputationBasis::Authored(&authored),
         );
         self.begin_career_in(&mut game, stats)?;
+        // The app opens a package on the league economy as it builds it; a run asking for the
+        // old economy puts it back.
+        game.economy = self.economy;
         Ok(game)
     }
 
@@ -184,6 +192,11 @@ impl WorldSpec {
         repair_opening_youth_academies(&mut game);
 
         self.begin_career_in(&mut game, StatsState::default())?;
+        // The app opens a generated world on the league economy once its leagues exist; here they
+        // exist once the career has begun.
+        if self.economy == EconomyModel::Leagues {
+            open_league_economy(&mut game, GroundPolicy::FitToLeague);
+        }
         Ok(game)
     }
 

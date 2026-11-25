@@ -8,6 +8,8 @@
 //! This module only states targets. The finance, wage and generation code read them; nothing
 //! here moves money.
 
+mod matchday;
+mod opening;
 mod spread;
 mod table;
 
@@ -21,6 +23,8 @@ use ts_rs::TS;
 
 use crate::game::Game;
 
+pub use matchday::{ground_capacity_for, ticket_price};
+pub use opening::{GroundPolicy, open_league_economy};
 pub use spread::revenue_spread;
 
 /// Which economy a career's money follows.
@@ -101,42 +105,72 @@ pub fn league_economy(country: &str, division: u32, mean_reputation: u32) -> Lea
 /// reputation inside their league: the most famous takes the top of the spread, a promoted club
 /// the bottom. A club in no league is absent.
 pub fn club_economies(game: &Game) -> HashMap<String, ClubEconomy> {
-    let reputation: HashMap<&str, u32> = game
-        .teams
-        .iter()
-        .map(|team| (team.id.as_str(), team.reputation))
-        .collect();
+    let reputation = reputations(game);
     let mut economies = HashMap::new();
     for (division, league) in crate::end_of_season::ladder_rungs(game) {
-        let mut clubs: Vec<(&str, u32)> = league
-            .participant_ids
-            .iter()
-            .filter_map(|id| reputation.get(id.as_str()).map(|rep| (id.as_str(), *rep)))
-            .collect();
-        if clubs.is_empty() {
-            continue;
+        for (club_id, economy) in league_club_economies(league, division, &reputation) {
+            economies.insert(club_id.to_string(), economy);
         }
-        // Most famous first; the id breaks a tie so the order cannot change between runs.
-        clubs.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)));
-        let mean_reputation =
-            clubs.iter().map(|(_, rep)| u64::from(*rep)).sum::<u64>() / clubs.len() as u64;
-        let country = league.country_id.as_deref().unwrap_or_default();
-        let economy = league_economy(
-            country,
-            division,
-            u32::try_from(mean_reputation).unwrap_or(u32::MAX),
-        );
-        for ((club_id, _), multiple) in clubs.iter().zip(revenue_spread(clubs.len())) {
-            economies.insert(
-                (*club_id).to_string(),
+    }
+    economies
+}
+
+/// One club's economy, as [`club_economies`] gives it, working out only its own league: the
+/// gate asks this once per fixture.
+pub fn club_economy(game: &Game, club_id: &str) -> Option<ClubEconomy> {
+    let (division, league) = crate::end_of_season::ladder_rungs(game)
+        .into_iter()
+        .find(|(_, league)| league.participant_ids.iter().any(|id| id == club_id))?;
+    league_club_economies(league, division, &reputations(game))
+        .into_iter()
+        .find(|(id, _)| *id == club_id)
+        .map(|(_, economy)| economy)
+}
+
+fn reputations(game: &Game) -> HashMap<&str, u32> {
+    game.teams
+        .iter()
+        .map(|team| (team.id.as_str(), team.reputation))
+        .collect()
+}
+
+/// The clubs of one league, most famous first, each with its economy.
+fn league_club_economies<'a>(
+    league: &'a domain::league::League,
+    division: u32,
+    reputation: &HashMap<&str, u32>,
+) -> Vec<(&'a str, ClubEconomy)> {
+    let mut clubs: Vec<(&str, u32)> = league
+        .participant_ids
+        .iter()
+        .filter_map(|id| reputation.get(id.as_str()).map(|rep| (id.as_str(), *rep)))
+        .collect();
+    if clubs.is_empty() {
+        return Vec::new();
+    }
+    // Most famous first; the id breaks a tie so the order cannot change between runs.
+    clubs.sort_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(b.0)));
+    let mean_reputation =
+        clubs.iter().map(|(_, rep)| u64::from(*rep)).sum::<u64>() / clubs.len() as u64;
+    let country = league.country_id.as_deref().unwrap_or_default();
+    let economy = league_economy(
+        country,
+        division,
+        u32::try_from(mean_reputation).unwrap_or(u32::MAX),
+    );
+    clubs
+        .iter()
+        .zip(revenue_spread(clubs.len()))
+        .map(|((club_id, _), multiple)| {
+            (
+                *club_id,
                 ClubEconomy {
                     league_id: league.id.clone(),
                     division,
                     revenue_target: (economy.revenue_per_club as f64 * multiple).round() as i64,
                     league: economy,
                 },
-            );
-        }
-    }
-    economies
+            )
+        })
+        .collect()
 }

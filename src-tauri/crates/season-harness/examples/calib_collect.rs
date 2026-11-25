@@ -75,6 +75,9 @@ fn main() {
         scope: Scope::Everything,
         package: None,
         international_football: true,
+        // The engine's calibration reads squads, not money; the old economy keeps its runs as
+        // they were.
+        economy: ofm_core::league_economy::EconomyModel::Legacy,
     };
     let game = spec.build().expect("world");
 

@@ -202,3 +202,123 @@ fn a_leagues_targets_add_up_to_its_clubs_times_its_average() {
         .sum();
     assert!((total - 3 * 380_000_000).abs() <= 3, "total {total}");
 }
+
+fn economy_in(country: &str, division: u32, multiple: f64) -> ClubEconomy {
+    let league = league_economy(country, division, 500);
+    ClubEconomy {
+        league_id: "l".to_string(),
+        division,
+        revenue_target: (league.revenue_per_club as f64 * multiple) as i64,
+        league,
+    }
+}
+
+/// Given clubs from League Two to the Premier League
+/// When their price per head is read
+/// Then a League Two crowd pays about EUR 20, a Premier League one EUR 75, a tiny club EUR 8,
+///      and richer never means cheaper.
+#[test]
+fn the_price_of_a_ticket_rises_with_the_clubs_money() {
+    assert_eq!(matchday::ticket_price(9_000_000), 20);
+    assert_eq!(matchday::ticket_price(380_000_000), 75);
+    assert_eq!(matchday::ticket_price(100_000), 8);
+    let mut previous = 0;
+    for revenue in [
+        1_000_000,
+        5_000_000,
+        20_000_000,
+        90_000_000,
+        200_000_000,
+        900_000_000,
+    ] {
+        let price = matchday::ticket_price(revenue);
+        assert!(price >= previous, "{revenue}: {price} after {previous}");
+        previous = price;
+    }
+}
+
+/// Given an average Premier League club and an average Welsh one, over 19 home league games
+/// When the ground their matchday money supports is sized
+/// Then the English club needs a big modern ground and the Welsh one a small one, as in life.
+#[test]
+fn a_clubs_ground_is_the_size_its_matchday_money_supports() {
+    let english = matchday::ground_capacity_for(&economy_in("ENG", 0, 1.0), 19);
+    let welsh = matchday::ground_capacity_for(&economy_in("WAL", 0, 1.0), 19);
+
+    assert!((35_000..=65_000).contains(&english), "England {english}");
+    assert!((800..=6_000).contains(&welsh), "Wales {welsh}");
+}
+
+/// Given the richest club in the richest league, and a club with no money at all
+/// When their grounds are sized
+/// Then neither leaves the range of grounds there are.
+#[test]
+fn no_ground_is_bigger_than_the_biggest_or_smaller_than_a_stand() {
+    let giant = matchday::ground_capacity_for(&economy_in("ENG", 0, 3.0), 19);
+    let pauper = matchday::ground_capacity_for(&economy_in("XX", 0, 0.0), 19);
+
+    assert_eq!(giant, 90_000);
+    assert_eq!(pauper, 800);
+}
+
+/// Given England's two divisions, on a world just built
+/// When it is opened on the league economy with grounds fitted to their leagues
+/// Then the career is on the league economy, every club's capacity is what its new ground holds,
+///      and the most famous top-flight club plays in a bigger ground than a second-division club.
+#[test]
+fn opening_a_world_fits_every_ground_to_its_league() {
+    let mut game = english_game();
+
+    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+
+    assert_eq!(game.economy, EconomyModel::Leagues);
+    let capacity = |id: &str| {
+        let team = game.teams.iter().find(|team| team.id == id).unwrap();
+        let held = crate::stadium::figures::stadium_figures(team.stadium_layout.as_ref().unwrap());
+        assert_eq!(team.stadium_capacity, held.capacity, "{id}");
+        team.stadium_capacity
+    };
+    assert!(capacity("bbb-giant") > capacity("ddd-second"));
+    assert!(capacity("ddd-second") > 5_000);
+}
+
+/// Given the same world, as an imported package whose authors set its grounds
+/// When it is opened on the league economy keeping its grounds
+/// Then the career is on the league economy and every capacity is as it was.
+#[test]
+fn opening_a_package_keeps_the_grounds_its_authors_set() {
+    let mut game = english_game();
+    let before: Vec<u32> = game
+        .teams
+        .iter()
+        .map(|team| team.stadium_capacity)
+        .collect();
+
+    open_league_economy(&mut game, GroundPolicy::KeepAuthored);
+
+    assert_eq!(game.economy, EconomyModel::Leagues);
+    let after: Vec<u32> = game
+        .teams
+        .iter()
+        .map(|team| team.stadium_capacity)
+        .collect();
+    assert_eq!(after, before);
+}
+
+/// Given England's two divisions
+/// When each club's economy is asked for one at a time
+/// Then each answer is the one the whole world's table gives, and a club in no league has none.
+#[test]
+fn one_clubs_economy_is_the_one_the_whole_table_gives() {
+    let game = english_game();
+    let all = club_economies(&game);
+
+    for team in &game.teams {
+        assert_eq!(
+            club_economy(&game, &team.id).as_ref(),
+            all.get(&team.id),
+            "{}",
+            team.id
+        );
+    }
+}

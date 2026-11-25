@@ -35,8 +35,22 @@ fn gate_post_id(fixture_id: &str) -> String {
 pub fn expected_gate(game: &Game, host_capacity: u32, fixture: &Fixture) -> Option<i64> {
     let mut rng = game.rng_for(&format!("finances/gate/{}", fixture.id), &fixture.date);
     let attendance_percent: i64 = rng.random_range(60..=92);
-    let ticket_price: i64 = rng.random_range(15..=25);
+    let ticket_price: i64 = match league_ticket_price(game, &fixture.home_team_id) {
+        // Within a tenth of the club's price: a derby or a cup tie is dearer than a dull Tuesday.
+        Some(price) => price * rng.random_range(90..=110) / 100,
+        None => rng.random_range(15..=25),
+    };
     gate_takings(host_capacity, attendance_percent, ticket_price)
+}
+
+/// What `club_id` charges a head on the league economy; `None` on the old economy, or for a
+/// club in no league, which keeps the old flat price.
+fn league_ticket_price(game: &Game, club_id: &str) -> Option<i64> {
+    if game.economy != crate::league_economy::EconomyModel::Leagues {
+        return None;
+    }
+    crate::league_economy::club_economy(game, club_id)
+        .map(|club| crate::league_economy::ticket_price(club.revenue_target))
 }
 
 /// Capacity times the share of it that came times the price, in whole euros. `None` for a negative
@@ -300,6 +314,32 @@ mod tests {
             .find(|fixture| fixture.id == fixture_id)
             .unwrap();
         expected_gate(game, capacity(game, &fixture.home_team_id), fixture).unwrap()
+    }
+
+    /// Given a career on the league economy, the user's club in England's top flight
+    /// When the gate of its home league match is priced
+    /// Then each head pays within a tenth of the club's ticket price, an attendance of 60-92% of
+    ///      the ground: far above the old economy's EUR 15-25.
+    #[test]
+    fn a_league_economy_gate_charges_the_clubs_ticket_price() {
+        let mut game = game_on(2025, 6, 16);
+        let mut league = user_league();
+        league.country_id = Some("ENG".to_string());
+        league.participant_ids = vec!["user".to_string(), "rival".to_string()];
+        game.competitions = vec![league];
+        game.economy = crate::league_economy::EconomyModel::Leagues;
+        let target = crate::league_economy::club_economy(&game, "user")
+            .expect("the user's club is in a league")
+            .revenue_target;
+        let price = crate::league_economy::ticket_price(target) as f64;
+
+        let per_seat = gate_for(&game, "u1") as f64 / f64::from(capacity(&game, "user"));
+
+        assert!(price > 40.0, "price {price}");
+        assert!(
+            (0.6 * 0.9 * price - 1.0..=0.92 * 1.1 * price + 1.0).contains(&per_seat),
+            "{per_seat} a seat at a price of {price}"
+        );
     }
 
     /// Given a club outside the user's league with a completed home league fixture on Saturday

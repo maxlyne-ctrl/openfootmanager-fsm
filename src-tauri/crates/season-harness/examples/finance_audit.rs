@@ -98,6 +98,8 @@ fn main() -> Result<(), String> {
     let mut rows: Vec<_> = totals.into_iter().collect();
     rows.sort_by_key(|(_, t)| -(t.reputation / t.clubs.max(1)));
     let kinds = [
+        "Broadcasting",
+        "Commercial",
         "Matchday",
         "Sponsorship",
         "PrizeMoney",
@@ -115,7 +117,11 @@ fn main() -> Result<(), String> {
     for ((country, league), t) in rows {
         let n = t.clubs.max(1);
         let avg = |kind: &str| t.by_kind.get(kind).copied().unwrap_or(0) / n;
-        let income = avg("Matchday") + avg("Sponsorship") + avg("PrizeMoney");
+        let income = avg("Matchday")
+            + avg("Sponsorship")
+            + avg("PrizeMoney")
+            + avg("Broadcasting")
+            + avg("Commercial");
         let wages = -(avg("PlayerWages") + avg("StaffWages"));
         let ratio = if income > 0 {
             format!("{:.0}%", 100.0 * wages as f64 / income as f64)
