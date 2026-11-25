@@ -588,22 +588,34 @@ pub(crate) fn first_choice_eleven<'a>(
     formation: &str,
 ) -> Vec<&'a domain::player::Player> {
     let mut chosen: Vec<&'a domain::player::Player> = Vec::with_capacity(11);
+    // Picked by position in `available_players`: a player appears in it once, and every AI
+    // club asks this daily, so comparing ids for every candidate in every slot added up.
+    let mut picked = vec![false; available_players.len()];
     for slot in formation_slots(formation).iter().take(11) {
+        // Each candidate's fit for the slot, worked out once rather than at every comparison.
         let best = available_players
             .iter()
-            .copied()
-            .filter(|player| !chosen.iter().any(|picked| picked.id == player.id))
-            .max_by(|left, right| {
+            .enumerate()
+            .filter(|(position, _)| !picked[*position])
+            .map(|(position, &player)| {
+                (
+                    position,
+                    player,
+                    positional_fit_for_assignment(player, slot),
+                )
+            })
+            .max_by(|(_, left, left_fit), (_, right, right_fit)| {
                 compare_goalkeeper_fit(left, right, slot).then_with(|| {
-                    positional_fit_for_assignment(left, slot)
-                        .partial_cmp(&positional_fit_for_assignment(right, slot))
+                    left_fit
+                        .partial_cmp(right_fit)
                         .unwrap_or(std::cmp::Ordering::Equal)
                         .then_with(|| right.id.cmp(&left.id))
                 })
             });
-        let Some(player) = best else {
+        let Some((position, player, _)) = best else {
             break;
         };
+        picked[position] = true;
         chosen.push(player);
     }
     chosen
