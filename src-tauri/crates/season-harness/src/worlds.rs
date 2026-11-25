@@ -191,12 +191,14 @@ impl WorldSpec {
         game.available_staff_market_last_activity_date = Some(start.format("%Y-%m-%d").to_string());
         repair_opening_youth_academies(&mut game);
 
-        self.begin_career_in(&mut game, StatsState::default())?;
-        // The app opens a generated world on the league economy once its leagues exist; here they
-        // exist once the career has begun.
+        // The app opens a generated world on the league economy as it builds it, before a club is
+        // chosen, so the contracts the career opens are the repriced ones. The leagues must exist
+        // for that; the career would otherwise build them.
         if self.economy == EconomyModel::Leagues {
+            ofm_core::world::ensure_multi_competition_foundations(&mut game);
             open_league_economy(&mut game, GroundPolicy::FitToLeague);
         }
+        self.begin_career_in(&mut game, StatsState::default())?;
         Ok(game)
     }
 

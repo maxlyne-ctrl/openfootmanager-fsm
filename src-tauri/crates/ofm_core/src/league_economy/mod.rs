@@ -10,7 +10,9 @@
 
 mod matchday;
 mod opening;
+mod players;
 mod spread;
+mod squads;
 mod table;
 
 #[cfg(test)]
@@ -25,6 +27,7 @@ use crate::game::Game;
 
 pub use matchday::{ground_capacity_for, ticket_price};
 pub use opening::{GroundPolicy, open_league_economy};
+pub use players::{market_value_for, squad_rating_target, weekly_wage_for};
 pub use spread::revenue_spread;
 
 /// Which economy a career's money follows.

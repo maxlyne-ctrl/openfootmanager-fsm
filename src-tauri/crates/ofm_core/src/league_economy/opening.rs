@@ -52,4 +52,5 @@ pub fn open_league_economy(game: &mut Game, grounds: GroundPolicy) {
         }
     }
     crate::stadium::backfill_stadium_layouts(&mut game.teams);
+    super::squads::fit_squads_to_money(game, &economies);
 }
