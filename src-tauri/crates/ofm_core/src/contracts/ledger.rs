@@ -5,7 +5,7 @@
 //! contract entry looks like. The ledger itself, and the rule that the current
 //! contract is its latest entry, live in `domain::contract_ledger`.
 
-use super::{contract_end_after, expected_contract_years, expected_wage};
+use super::{contract_end_after, expected_contract_years, expected_wage_at};
 use chrono::NaiveDate;
 use domain::contract_ledger::{ContractRecord, ContractSource};
 use domain::player::{Player, PlayerMovementEntry, PlayerMovementKind};
@@ -71,10 +71,21 @@ pub(crate) fn standard_contract_terms(
     today: NaiveDate,
     offered_wage: u32,
 ) -> Option<(u32, NaiveDate)> {
+    standard_contract_terms_at(player, buying_club, today, offered_wage, None)
+}
+
+/// As [`standard_contract_terms`], asking from `market` on the league economy.
+pub(crate) fn standard_contract_terms_at(
+    player: &Player,
+    buying_club: &Team,
+    today: NaiveDate,
+    offered_wage: u32,
+    market: Option<u32>,
+) -> Option<(u32, NaiveDate)> {
     let wage = if offered_wage > 0 {
         offered_wage
     } else {
-        expected_wage(player, buying_club, today)
+        expected_wage_at(player, buying_club, today, market)
     };
     let end = contract_end_after(today, expected_contract_years(player, today))?;
     Some((wage, end))
@@ -83,6 +94,7 @@ pub(crate) fn standard_contract_terms(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::contracts::expected_wage;
     use domain::player::{PlayerAttributes, Position};
 
     fn player(date_of_birth: &str) -> Player {

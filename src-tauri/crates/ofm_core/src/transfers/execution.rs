@@ -251,9 +251,16 @@ pub(super) fn buyers_standard_terms(
         .ok_or("be.error.teamNotFound")?;
     // No bid carries a wage yet (every `wage_offered` is 0), so none is passed; when one
     // does, it is passed here.
-    let (wage, end) =
-        standard_contract_terms(player, &buyer, game.clock.current_date.date_naive(), 0)
-            .ok_or(ERR_UNABLE_TO_CALCULATE_CONTRACT_END_DATE)?;
+    // On the league economy he asks what the buyer's market pays his rating.
+    let market = crate::league_economy::market_wage(game, player, buyer_team_id);
+    let (wage, end) = crate::contracts::standard_contract_terms_at(
+        player,
+        &buyer,
+        game.clock.current_date.date_naive(),
+        0,
+        market,
+    )
+    .ok_or(ERR_UNABLE_TO_CALCULATE_CONTRACT_END_DATE)?;
     Ok((buyer, wage, end))
 }
 

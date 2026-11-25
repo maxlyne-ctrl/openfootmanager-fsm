@@ -7,8 +7,15 @@ use crate::game::Game;
 use super::{ClubEconomy, market_value_for, squad_rating_target, weekly_wage_for};
 
 /// Where the unattached pool's ratings centre: a player no club has signed is mostly a
-/// lower-league journeyman.
-const FREE_AGENT_RATING: f64 = 52.0;
+/// lower-league journeyman. At 52 the pool sat above the weakest leagues, whose clubs signed it
+/// cheaply and rose four points in six seasons (finance_audit, shipped world).
+const FREE_AGENT_RATING: f64 = 46.0;
+
+/// Squads open this far under the rating their money buys, because they settle upward: a new
+/// world's squads are young and grow into their peak, and over five seasons every league rose
+/// about two to three points before levelling off, on the old economy as on this one
+/// (finance_audit, shipped world). Opening under the target lands them on it.
+pub(crate) const SETTLING_ALLOWANCE: f64 = 2.0;
 
 /// No rating is moved outside this range: a squad is moved, not invented.
 const LOWEST_RATING: u8 = 25;
@@ -20,6 +27,8 @@ const WAGE_BUDGET_HEADROOM_PERCENT: i64 = 5;
 const OPENING_CASH_PERCENT: i64 = 25;
 /// The transfer budget: a seventh of a season's revenue.
 const TRANSFER_BUDGET_PERCENT: i64 = 15;
+/// The share of cash banked beyond the reserve that a new season adds to the transfer budget.
+const BANKED_SPEND_PERCENT: i64 = 50;
 
 /// Move every squad to the rating its money buys, price every player on the market's curves,
 /// and set each club's wage budget, transfer budget and cash from its revenue.
@@ -83,7 +92,9 @@ fn move_squads_to_their_standard(
         .filter_map(|(club, (sum, count))| {
             let target = match club {
                 None => FREE_AGENT_RATING,
-                Some(id) => squad_rating_target(economies.get(id)?.revenue_target),
+                Some(id) => {
+                    squad_rating_target(economies.get(id)?.revenue_target) - SETTLING_ALLOWANCE
+                }
             };
             let shift = (target - sum / count as f64).round() as i32;
             Some((club.map(str::to_string), shift))
@@ -126,5 +137,28 @@ fn set_budgets(game: &mut Game, economies: &HashMap<String, ClubEconomy>) {
         team.wage_budget = affordable.max(bill * (100 + WAGE_BUDGET_HEADROOM_PERCENT) / 100);
         team.transfer_budget = revenue * TRANSFER_BUDGET_PERCENT / 100;
         team.finance = revenue * OPENING_CASH_PERCENT / 100;
+    }
+}
+
+/// Each club's budgets for a new season on the league economy, from its revenue now: promoted
+/// and relegated clubs spend at their new level, and money a club has banked beyond a reserve of
+/// a quarter-season becomes half again of a transfer budget. Without this the opening budgets
+/// stood for a whole career, and clubs that could not spend them piled up cash.
+pub fn refresh_budgets(game: &mut Game) {
+    if game.economy != super::EconomyModel::Leagues {
+        return;
+    }
+    let economies = super::club_economies(game);
+    for team in &mut game.teams {
+        let Some(economy) = economies.get(&team.id) else {
+            continue;
+        };
+        let revenue = economy.revenue_target;
+        let share = revenue.saturating_mul(i64::from(economy.league.wage_ratio_percent)) / 100 / 52;
+        team.wage_budget = share * (100 + WAGE_BUDGET_HEADROOM_PERCENT) / 100;
+        let reserve = revenue * OPENING_CASH_PERCENT / 100;
+        let banked = (team.finance - reserve).max(0);
+        let budget = revenue * TRANSFER_BUDGET_PERCENT / 100 + banked * BANKED_SPEND_PERCENT / 100;
+        team.transfer_budget = budget.min(team.finance.max(0));
     }
 }

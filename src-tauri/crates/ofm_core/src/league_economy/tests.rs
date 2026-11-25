@@ -215,12 +215,12 @@ fn economy_in(country: &str, division: u32, multiple: f64) -> ClubEconomy {
 
 /// Given clubs from League Two to the Premier League
 /// When their price per head is read
-/// Then a League Two crowd pays about EUR 20, a Premier League one EUR 75, a tiny club EUR 8,
+/// Then a League Two crowd pays about EUR 20, a Premier League one EUR 90, a tiny club EUR 8,
 ///      and richer never means cheaper.
 #[test]
 fn the_price_of_a_ticket_rises_with_the_clubs_money() {
     assert_eq!(matchday::ticket_price(9_000_000), 20);
-    assert_eq!(matchday::ticket_price(380_000_000), 75);
+    assert_eq!(matchday::ticket_price(380_000_000), 90);
     assert_eq!(matchday::ticket_price(100_000), 8);
     let mut previous = 0;
     for revenue in [
@@ -369,8 +369,9 @@ fn squad_average(game: &Game, club: &str) -> f64 {
 
 /// Given England's two divisions, every squad rated about the same
 /// When the world is opened on the league economy
-/// Then each squad averages the rating its club's money buys, so the most famous top-flight club
-///      fields a far better side than a second-division one.
+/// Then each squad opens at the rating its club's money buys, less the points a new world's
+///      squads grow in their first seasons, so the most famous top-flight club fields a far
+///      better side than a second-division one.
 #[test]
 fn opening_a_world_rates_every_squad_by_its_money() {
     let mut game = english_game_with_squads();
@@ -382,7 +383,7 @@ fn opening_a_world_rates_every_squad_by_its_money() {
         let Some(economy) = economies.get(club) else {
             continue;
         };
-        let target = squad_rating_target(economy.revenue_target);
+        let target = squad_rating_target(economy.revenue_target) - squads::SETTLING_ALLOWANCE;
         let average = squad_average(&game, club);
         assert!(
             (average - target).abs() <= 1.5,
@@ -637,4 +638,135 @@ fn a_scouted_prospect_is_drawn_to_the_standard_of_the_club_that_found_him() {
 
     assert_eq!(prospect.ovr, recruit.ovr);
     assert!(prospect.team_id.is_none());
+}
+
+/// Given a league economy world just opened, so each club pays its squad its league's share
+/// When a squad player's market wage at his own club is read
+/// Then it is the wage the club pays him now: the opening already set every wage to the market.
+#[test]
+fn a_players_market_wage_is_what_his_club_pays_for_his_rating() {
+    let mut game = english_game_with_squads();
+    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+
+    let economies = club_economies(&game);
+    for player in game.players.iter().filter(|p| p.team_id.is_some()) {
+        let club = player.team_id.as_deref().unwrap();
+        if !economies.contains_key(club) {
+            continue;
+        }
+        let market = market_wage(&game, player, club).expect("a club in a league has a market");
+        let paid = i64::from(player.wage());
+        assert!(
+            (i64::from(market) - paid).abs() <= 1,
+            "{}: market {market}, paid {paid}",
+            player.id
+        );
+    }
+}
+
+/// Given a player whose rating has fallen since his wage was set
+/// When his market wage is read
+/// Then it is below what he is paid: the market pays for what he is now, so his next contract
+///      can be cheaper.
+#[test]
+fn a_fading_players_market_wage_falls_with_his_rating() {
+    let mut game = english_game_with_squads();
+    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    let index = game
+        .players
+        .iter()
+        .position(|p| p.id == "bbb-giant-0")
+        .unwrap();
+    let paid = game.players[index].wage();
+    let position = game.players[index].natural_position.clone();
+    let lower = game.players[index].ovr - 6;
+    crate::player_rating::move_attributes_to(&mut game.players[index].attributes, &position, lower);
+    let today = game.clock.current_date.date_naive();
+    crate::player_rating::refresh_player_derived(&mut game.players[index], today);
+
+    let market = market_wage(&game, &game.players[index], "bbb-giant").unwrap();
+
+    assert!(market < paid, "market {market}, paid {paid}");
+}
+
+/// Given a career on the old economy, and a club in no league
+/// When a market wage is asked for
+/// Then there is none, and the old rules stand.
+#[test]
+fn there_is_no_market_wage_off_the_league_economy() {
+    let game = english_game_with_squads();
+    let player = game.players.iter().find(|p| p.id == "bbb-giant-0").unwrap();
+
+    assert_eq!(market_wage(&game, player, "bbb-giant"), None);
+    let mut on = english_game_with_squads();
+    on.economy = EconomyModel::Leagues;
+    assert_eq!(market_wage(&on, player, "fff-nowhere"), None);
+}
+
+/// Given a league economy world a season on, the most famous club sitting on a hoard of cash
+/// When budgets are set for the new season
+/// Then its wage budget is its league's share of its revenue, and its transfer budget a seventh
+///      of its revenue plus half the cash it holds over a reserve of a quarter-season: money in
+///      the bank becomes money to spend, as it does at a real club.
+#[test]
+fn a_new_season_turns_a_hoard_into_a_transfer_budget() {
+    let mut game = english_game_with_squads();
+    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    let giant = club_economy(&game, "bbb-giant").unwrap();
+    let revenue = giant.revenue_target;
+    let index = game.teams.iter().position(|t| t.id == "bbb-giant").unwrap();
+    game.teams[index].finance = revenue * 2;
+
+    refresh_budgets(&mut game);
+
+    let team = &game.teams[index];
+    let share = revenue * i64::from(giant.league.wage_ratio_percent) / 100 / 52;
+    assert_eq!(team.wage_budget, share * 105 / 100);
+    let reserve = revenue / 4;
+    assert_eq!(
+        team.transfer_budget,
+        revenue * 15 / 100 + (revenue * 2 - reserve) / 2
+    );
+}
+
+/// Given a club short of cash
+/// When budgets are set for the new season
+/// Then its transfer budget is no more than it holds: a club cannot spend money it does not
+///      have.
+#[test]
+fn a_club_short_of_cash_has_no_more_to_spend_than_it_holds() {
+    let mut game = english_game_with_squads();
+    open_league_economy(&mut game, GroundPolicy::FitToLeague);
+    let index = game
+        .teams
+        .iter()
+        .position(|t| t.id == "ddd-second")
+        .unwrap();
+    game.teams[index].finance = 1_000;
+
+    refresh_budgets(&mut game);
+
+    assert_eq!(game.teams[index].transfer_budget, 1_000);
+}
+
+/// Given a career on the old economy
+/// When budgets are set for the new season
+/// Then nothing changes: the old economy never refreshed them.
+#[test]
+fn budgets_are_left_alone_on_the_old_economy() {
+    let mut game = english_game_with_squads();
+    let before: Vec<(i64, i64)> = game
+        .teams
+        .iter()
+        .map(|t| (t.wage_budget, t.transfer_budget))
+        .collect();
+
+    refresh_budgets(&mut game);
+
+    let after: Vec<(i64, i64)> = game
+        .teams
+        .iter()
+        .map(|t| (t.wage_budget, t.transfer_budget))
+        .collect();
+    assert_eq!(after, before);
 }

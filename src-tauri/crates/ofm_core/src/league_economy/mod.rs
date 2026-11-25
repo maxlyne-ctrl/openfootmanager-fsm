@@ -8,6 +8,7 @@
 //! This module only states targets. The finance, wage and generation code read them; nothing
 //! here moves money.
 
+mod market;
 mod matchday;
 mod newcomers;
 mod opening;
@@ -26,11 +27,13 @@ use ts_rs::TS;
 
 use crate::game::Game;
 
+pub use market::market_wage;
 pub use matchday::{ground_capacity_for, ticket_price};
 pub use newcomers::{fit_newcomer, fit_prospect};
 pub use opening::{GroundPolicy, open_league_economy};
 pub use players::{market_value_for, squad_rating_target, weekly_wage_for};
 pub use spread::revenue_spread;
+pub use squads::refresh_budgets;
 
 /// Which economy a career's money follows.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, TS)]

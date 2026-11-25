@@ -66,7 +66,39 @@ pub(crate) fn backend_text_with_param(key: &str, param_name: &str, param_value: 
 }
 
 pub(crate) fn expected_wage(player: &Player, team: &Team, current_date: NaiveDate) -> u32 {
-    let mut wage = reference_player_wage(player) as f32;
+    expected_wage_at(player, team, current_date, None)
+}
+
+/// What a player asks of `team` in `game`: from `team`'s market on the league economy, from his
+/// current wage on the old one.
+pub(crate) fn expected_wage_in(
+    game: &crate::game::Game,
+    player: &Player,
+    team: &Team,
+    current_date: NaiveDate,
+) -> u32 {
+    let market = crate::league_economy::market_wage(game, player, &team.id);
+    expected_wage_at(player, team, current_date, market)
+}
+
+/// The least a player takes: a cut of up to 15% on his current wage, or, on the league economy,
+/// his club's market wage when that is lower, so a fading player takes what he is now worth.
+pub(crate) fn minimum_acceptable_wage_at(current_wage: u32, market: Option<u32>) -> u32 {
+    let minimum = minimum_acceptable_wage(current_wage);
+    market.map_or(minimum, |market| minimum.min(market))
+}
+
+/// What a player asks of `team`. With `market`, the wage his club's market pays his rating on
+/// the league economy (`league_economy::market_wage`), the ask starts from it; without, from his
+/// current wage, as it always has. Starting from the current wage is what ratchets wages up:
+/// each renewal's premiums compound on the last.
+pub(crate) fn expected_wage_at(
+    player: &Player,
+    team: &Team,
+    current_date: NaiveDate,
+    market: Option<u32>,
+) -> u32 {
+    let mut wage = market.unwrap_or_else(|| reference_player_wage(player)) as f32;
     let age = domain::age::age_on_or_unknown(current_date, &player.date_of_birth);
     let remaining_days = remaining_contract_days(player, current_date);
 
@@ -80,7 +112,10 @@ pub(crate) fn expected_wage(player: &Player, team: &Team, current_date: NaiveDat
         wage *= 1.10;
     }
 
-    wage *= importance_wage_multiplier(player);
+    // The market already prices how good he is; the old value bands would count it twice.
+    if market.is_none() {
+        wage *= importance_wage_multiplier(player);
+    }
 
     if team.reputation < 40 {
         wage *= 1.05;
@@ -92,8 +127,22 @@ pub(crate) fn expected_wage(player: &Player, team: &Team, current_date: NaiveDat
         wage *= 1.05;
     }
 
-    let rounded = round_up_to_nearest_thousand(wage.ceil() as u32);
-    rounded.max(reference_player_wage(player))
+    match market {
+        // Two figures: rounding a 600-a-week ask up to a thousand would be a rise of two thirds.
+        Some(_) => two_significant_figures(wage.round() as u32),
+        None => {
+            let rounded = round_up_to_nearest_thousand(wage.ceil() as u32);
+            rounded.max(reference_player_wage(player))
+        }
+    }
+}
+
+fn two_significant_figures(wage: u32) -> u32 {
+    if wage < 100 {
+        return wage.max(1);
+    }
+    let scale = 10_u32.pow(wage.ilog10() - 1);
+    ((wage + scale / 2) / scale) * scale
 }
 
 pub(crate) fn reference_player_wage(player: &Player) -> u32 {
@@ -273,6 +322,20 @@ mod tests {
         assert_eq!(
             expected_wage(&prime, &club_of_standing(), first_of_august()),
             110_000
+        );
+    }
+
+    /// Given the same veteran on 100,000 a week, whose club's market now pays his rating 600
+    /// When his expected wage is worked out on the league economy
+    /// Then he asks from the market, not from his old wage: 630, five per cent off the tenth his
+    ///      expiring contract adds, kept to two figures and not rounded up to a thousand.
+    #[test]
+    fn on_the_league_economy_a_player_asks_from_his_market_wage() {
+        let veteran = on_the_books("1994-01-01", 100_000, 400_000);
+
+        assert_eq!(
+            expected_wage_at(&veteran, &club_of_standing(), first_of_august(), Some(600)),
+            630
         );
     }
 

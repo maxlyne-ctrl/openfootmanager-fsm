@@ -703,7 +703,8 @@ pub(crate) fn bring_in_one(game: &mut Game, team: &Team, group: &Position) -> Op
 
     let current_date = game.clock.current_date.date_naive();
     for index in free_agents_best_first(game, group) {
-        let wage = crate::contracts::expected_wage(&game.players[index], team, current_date);
+        let wage =
+            crate::contracts::expected_wage_in(game, &game.players[index], team, current_date);
         let permitted = crate::contract_wage_policy::wage_policy_verdict(
             game,
             team,

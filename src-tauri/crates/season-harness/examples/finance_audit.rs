@@ -6,7 +6,7 @@
 //! With a season count, it also prints each league's average squad rating, average cash and clubs
 //! in the red at every season end, so drift over a career shows.
 //!
-//! Usage: `finance_audit [gate|shipped] [seasons]`
+//! Usage: `finance_audit [gate|shipped] [seasons] [legacy]`; `legacy` runs the old economy.
 
 use domain::finance::CashKind;
 use domain::league::CompetitionType;
@@ -85,6 +85,9 @@ fn main() -> Result<(), String> {
     };
     spec.scope = Scope::Everything;
     spec.international_football = false;
+    if args.get(3).map(String::as_str) == Some("legacy") {
+        spec.economy = ofm_core::league_economy::EconomyModel::Legacy;
+    }
     let mut game = spec.build()?;
     let opening: HashMap<String, i64> = game
         .teams

@@ -637,6 +637,8 @@ fn regenerate_competitions_for_new_season(
         qualified_field,
         &retained,
     );
+    // With promotion and relegation applied, each club budgets for the level it now plays at.
+    crate::league_economy::refresh_budgets(game);
     refresh_user_competition_scope(game);
     game.sync_legacy_league();
 }

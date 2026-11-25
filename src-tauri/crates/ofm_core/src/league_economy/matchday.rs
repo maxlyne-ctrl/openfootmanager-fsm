@@ -4,13 +4,14 @@ use super::ClubEconomy;
 
 /// Average takings per head at the gate, by club revenue, interpolated on a log scale. A League
 /// Two crowd pays about EUR 20 a head (GBP 2.1m matchday over 23 home games at ~5,000, Swiss
-/// Ramble 2023/24); the Premier League takes about EUR 75 (GBP 1bn+ matchday over 380 games
-/// at ~40,000, Deloitte ARFF 2026), hospitality included.
+/// Ramble 2023/24); the Premier League takes about EUR 90 (GBP 1bn+ matchday over 380 games
+/// in grounds of ~40,000 nearly full, Deloitte ARFF 2026), hospitality included. At EUR 75 the
+/// top flight's grounds came out near 60,000 on average.
 const PRICE_KNOTS: [(i64, i64); 4] = [
     (500_000, 8),
     (9_000_000, 20),
     (40_000_000, 30),
-    (380_000_000, 75),
+    (380_000_000, 90),
 ];
 
 /// The share of the ground an average home league match fills.
