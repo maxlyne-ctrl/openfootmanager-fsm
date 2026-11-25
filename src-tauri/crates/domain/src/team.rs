@@ -34,6 +34,10 @@ pub struct Team {
     pub season_expenses: i64,
     #[serde(default)]
     pub financial_ledger: Vec<FinancialTransaction>,
+    /// The club's sponsors, merchandise, hospitality and fan experiences on the league economy.
+    /// None on the old economy, which keeps its single `sponsorship`.
+    #[serde(default)]
+    pub commercial: Option<crate::commercial::Commercial>,
     #[serde(default)]
     pub sponsorship: Option<Sponsorship>,
     #[serde(default)]
@@ -493,6 +497,7 @@ impl Team {
             season_income: 0,
             season_expenses: 0,
             financial_ledger: Vec::new(),
+            commercial: None,
             sponsorship: None,
             facilities: Facilities::default(),
             formation: "4-4-2".to_string(),

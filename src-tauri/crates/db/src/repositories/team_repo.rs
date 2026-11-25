@@ -641,6 +641,58 @@ mod tests {
         assert_eq!(listed[0].stadium_layout, Some(layout));
     }
 
+    /// Given a club with sponsors, a premium merchandise range, basic hospitality and a museum
+    /// When it is saved and read back, alone and in the list
+    /// Then its commercial set-up is as it was saved.
+    #[test]
+    fn a_clubs_commercial_set_up_survives_a_save() {
+        use domain::commercial::{
+            Commercial, FanExperiences, HospitalityPackage, MerchandiseRange, SponsorDeal,
+            SponsorSlot,
+        };
+        let db = test_db();
+        let mut team = sample_team("team-commercial", "Commercial FC");
+        let commercial = Commercial {
+            sponsors: vec![SponsorDeal {
+                slot: SponsorSlot::Shirt,
+                partner: "Northway Insurance".to_string(),
+                annual_value: 12_500_000,
+                last_season: 2028,
+            }],
+            merchandise: MerchandiseRange::Premium,
+            hospitality: HospitalityPackage::Basic,
+            fan_experiences: FanExperiences {
+                stadium_tours: false,
+                museum: true,
+                matchday_events: false,
+            },
+        };
+        team.commercial = Some(commercial.clone());
+
+        upsert_team(db.conn(), &team).unwrap();
+        let loaded = load_team(db.conn(), "team-commercial").unwrap().unwrap();
+        let listed = load_all_teams(db.conn()).unwrap();
+
+        assert_eq!(loaded.commercial, Some(commercial.clone()));
+        assert_eq!(listed[0].commercial, Some(commercial));
+    }
+
+    /// Given a team row written before the commercial column existed
+    /// When it is read
+    /// Then it has no commercial set-up.
+    #[test]
+    fn a_team_row_without_a_commercial_set_up_reads_as_none() {
+        let db = test_db();
+        upsert_team(db.conn(), &sample_team("team-old-c", "Old C")).unwrap();
+        db.conn()
+            .execute("UPDATE teams SET commercial_json = NULL", [])
+            .unwrap();
+
+        let loaded = load_team(db.conn(), "team-old-c").unwrap().unwrap();
+
+        assert_eq!(loaded.commercial, None);
+    }
+
     /// Given a team row written before the ground column existed, when it is
     /// read, then it has no layout.
     #[test]
