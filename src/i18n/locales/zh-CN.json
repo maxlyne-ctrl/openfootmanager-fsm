@@ -186,7 +186,8 @@
     "digestEventUserNews": "关于您俱乐部或球员的新闻",
     "digestEventTransferWindow": "转会窗口开启或截止日",
     "digestContinue": "继续推进",
-    "digestError": "模拟出错"
+    "digestError": "模拟出错",
+    "ground": "球场"
   },
   "continueMenu": {
     "goToField": "进入球场",
@@ -328,7 +329,9 @@
       "needOne": "请至少开启一项赛事。",
       "summary": "模拟 {{regions}} 个地区 · {{competitions}} 项赛事",
       "clubs": "模拟地区内共有 {{clubs}} 家俱乐部",
-      "apply": "应用"
+      "apply": "应用",
+      "internationalFootball": "国际足球",
+      "internationalFootballHint": "国家队、国家队征召和世界杯。关闭后生涯只有俱乐部足球，推进更快。"
     },
     "rail": {
       "label": "国家和联赛",
@@ -4730,5 +4733,53 @@
     "body": "你上次游戏时发生了崩溃。报告它能帮助我们修复问题 —— 在任何内容离开你的电脑之前，你都会看到将要发送的全部内容。",
     "report": "报告",
     "notNow": "以后再说"
+  },
+  "ground": {
+    "title": "球场",
+    "capacity": "容量",
+    "seats": "座位",
+    "standing": "站位",
+    "executiveBoxes": "包厢",
+    "underCover": "有顶棚",
+    "restrictedView": "视线受阻",
+    "atmosphere": "氛围",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "看台",
+    "stand": "看台名称",
+    "sections": "分区",
+    "tiersRows": "层（排数）",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "露天土坡",
+    "roof": "顶棚",
+    "roofMixed": "混合",
+    "roofKind": {
+      "none": "无",
+      "posts": "立柱式",
+      "goalpost": "门架式",
+      "pitched": "坡屋顶",
+      "cantilever": "悬挑式"
+    },
+    "groundRoof": {
+      "ring": "全场顶棚",
+      "arch": "全场拱形顶棚"
+    },
+    "retractable": "可开合",
+    "tierKind": {
+      "seated": "座席",
+      "rail": "折叠座椅",
+      "terrace": "站席"
+    },
+    "pitch": "场地",
+    "surface": "草皮",
+    "surfaceKind": {
+      "natural": "天然草",
+      "hybrid": "混合草",
+      "artificial": "人造草"
+    },
+    "undersoilHeating": "草皮加热",
+    "growLights": "补光灯",
+    "installed": "已安装",
+    "notInstalled": "无"
   }
 }

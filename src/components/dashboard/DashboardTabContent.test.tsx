@@ -28,6 +28,9 @@ vi.mock("../transfers/TransferCentreWorldTab", () => ({
 vi.mock("../hallOfFame/HallOfFameWorldTab", () => ({
   default: () => <div>Hall Of Fame World Mock</div>,
 }));
+vi.mock("../ground/GroundTab", () => ({
+  default: ({ careerKey }: { careerKey: string }) => <div>Ground Mock {careerKey}</div>,
+}));
 
 function createGameState(): GameStateData {
   return {
@@ -125,6 +128,18 @@ describe("DashboardTabContent", () => {
     renderTabContent("HallOfFame");
 
     expect(await screen.findByText("Hall Of Fame World Mock")).toBeInTheDocument();
+  });
+
+  /**
+   * Given the Ground entry is chosen
+   * When the dashboard shows its tab
+   * Then the Ground screen loads, keyed to the date and the career so it asks again when either moves.
+   */
+  it("loads the ground tab, keyed to the date and the career", async () => {
+    renderTabContent("Ground");
+
+    const ground = await screen.findByText(/Ground Mock/);
+    expect(ground).toHaveTextContent("Ground Mock 2026-07-10T12:00:00Z|0");
   });
 
   it("falls back to the home content when the active tab is unknown", () => {

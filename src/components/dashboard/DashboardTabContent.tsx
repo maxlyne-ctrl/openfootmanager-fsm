@@ -8,6 +8,7 @@ const TacticsTab = lazy(() => import("../tactics/TacticsTab"));
 const TrainingTab = lazy(() => import("../training/TrainingTab"));
 const ScheduleTab = lazy(() => import("../schedule/ScheduleTab"));
 const FinancesTab = lazy(() => import("../finances/FinancesTab"));
+const GroundTab = lazy(() => import("../ground/GroundTab"));
 const TransfersTab = lazy(() => import("../transfers/TransfersTab"));
 const TransferCentreWorldTab = lazy(() => import("../transfers/TransferCentreWorldTab"));
 const HallOfFameWorldTab = lazy(() => import("../hallOfFame/HallOfFameWorldTab"));
@@ -108,6 +109,11 @@ export default function DashboardTabContent({ viewModel }: DashboardTabContentPr
         onGameUpdate={onGameUpdate}
         onSelectPlayer={onSelectPlayer}
       />
+    );
+  } else if (activeTab === "Ground") {
+    // A new day or another career may have changed the ground, so either asks for it again.
+    content = (
+      <GroundTab careerKey={`${gameState.clock.current_date}|${gameState.career_token ?? 0}`} />
     );
   } else if (activeTab === "Transfers") {
     content = (

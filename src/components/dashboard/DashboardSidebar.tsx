@@ -13,6 +13,7 @@ import {
   Crosshair,
   Dumbbell,
   DollarSign,
+  Landmark,
   Eye,
   UsersRound,
   UserCheck,
@@ -144,6 +145,7 @@ export default function DashboardSidebar({
       tab: "Youth",
     },
     { icon: <DollarSign />, label: t("dashboard.finances"), tab: "Finances" },
+    { icon: <Landmark />, label: t("dashboard.ground"), tab: "Ground" },
     { icon: <TrendingUp />, label: t("dashboard.transfers"), tab: "Transfers" },
   ];
   const worldItems: Array<{ icon: JSX.Element; label: string; tab: string }> = [

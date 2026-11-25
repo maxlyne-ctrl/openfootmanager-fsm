@@ -249,16 +249,16 @@ pub async fn select_team(
     team_id: String,
     active_region_ids: Option<Vec<String>>,
     active_competition_ids: Option<Vec<String>>,
+    international_football: Option<bool>,
 ) -> Result<Game, String> {
     info!("[cmd] select_team: team_id={}", team_id);
     let mut sm = map_save_manager_lock_error(sm_state.0.lock())?;
-    select_team_internal(
-        &state,
-        &mut sm,
-        &team_id,
-        active_region_ids,
-        active_competition_ids,
-    )
+    let scope = CareerScope {
+        regions: active_region_ids,
+        competitions: active_competition_ids,
+        international_football,
+    };
+    select_team_internal(&state, &mut sm, &team_id, scope)
 }
 
 /// Takes the club, saves the career and installs it; returns the game as the screen must hold it.
@@ -266,8 +266,7 @@ fn select_team_internal(
     state: &StateManager,
     sm: &mut db::save_manager::SaveManager,
     team_id: &str,
-    active_region_ids: Option<Vec<String>>,
-    active_competition_ids: Option<Vec<String>>,
+    scope: CareerScope,
 ) -> Result<Game, String> {
     let (mut game, loaded_save_id) = crate::application::career::snapshot_career(state)
         .ok_or("be.error.noActiveGameSession".to_string())?;
@@ -275,11 +274,6 @@ fn select_team_internal(
         .get_stats_state(|stats| stats.clone())
         .unwrap_or_default();
     // `game` is a copy of the active game, so a refusal leaves the session untouched.
-    let scope = CareerScope {
-        regions: active_region_ids,
-        competitions: active_competition_ids,
-        ..CareerScope::default()
-    };
     let stats_state = begin_career(&mut game, team_id, scope, current_stats_state)?;
 
     let save_id = persist_chosen_club(loaded_save_id.as_deref(), sm, &game, &stats_state)?;

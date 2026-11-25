@@ -186,7 +186,8 @@
     "digestEventUserNews": "Новости о вашем клубе или игроках",
     "digestEventTransferWindow": "Открытие или закрытие трансферного окна",
     "digestContinue": "Продолжить продвижение",
-    "digestError": "Ошибка симуляции"
+    "digestError": "Ошибка симуляции",
+    "ground": "Стадион"
   },
   "continueMenu": {
     "goToField": "Перейти на поле",
@@ -328,7 +329,9 @@
       "needOne": "Включите хотя бы один турнир.",
       "summary": "Регионов: {{regions}} · симулируемых турниров: {{competitions}}",
       "clubs": "Клубов в симулируемых регионах: {{clubs}}",
-      "apply": "Применить"
+      "apply": "Применить",
+      "internationalFootball": "Международный футбол",
+      "internationalFootballHint": "Сборные, их вызовы и чемпионат мира. Если выключить, в карьере будет только клубный футбол и она пойдёт быстрее."
     },
     "rail": {
       "label": "Страны и лиги",
@@ -4730,5 +4733,53 @@
     "body": "Ваша прошлая сессия завершилась сбоем. Сообщив о нём, вы поможете его исправить — вы увидите всё, что будет отправлено, прежде чем что-либо покинет ваш компьютер.",
     "report": "Сообщить",
     "notNow": "Не сейчас"
+  },
+  "ground": {
+    "title": "Стадион",
+    "capacity": "Вместимость",
+    "seats": "Сидячие места",
+    "standing": "Стоячие места",
+    "executiveBoxes": "VIP-ложи",
+    "underCover": "Под крышей",
+    "restrictedView": "Ограниченный обзор",
+    "atmosphere": "Атмосфера",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Трибуны",
+    "stand": "Трибуна",
+    "sections": "Секции",
+    "tiersRows": "Ярусы (ряды)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Открытая насыпь",
+    "roof": "Крыша",
+    "roofMixed": "Смешанная",
+    "roofKind": {
+      "none": "Нет",
+      "posts": "На опорах",
+      "goalpost": "Портальная",
+      "pitched": "Двускатная",
+      "cantilever": "Консольная"
+    },
+    "groundRoof": {
+      "ring": "Крыша над всем стадионом",
+      "arch": "Арочная крыша над всем стадионом"
+    },
+    "retractable": "Раздвижная",
+    "tierKind": {
+      "seated": "Сидячие",
+      "rail": "Откидные сиденья",
+      "terrace": "Стоячая трибуна"
+    },
+    "pitch": "Поле",
+    "surface": "Покрытие",
+    "surfaceKind": {
+      "natural": "Натуральный газон",
+      "hybrid": "Гибридный газон",
+      "artificial": "Искусственное"
+    },
+    "undersoilHeating": "Подогрев поля",
+    "growLights": "Лампы досветки",
+    "installed": "Есть",
+    "notInstalled": "Нет"
   }
 }

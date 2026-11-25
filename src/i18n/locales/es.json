@@ -186,7 +186,8 @@
     "digestEventUserNews": "Noticias sobre tu club o tus jugadores",
     "digestEventTransferWindow": "Apertura o cierre del mercado de fichajes",
     "digestContinue": "Seguir avanzando",
-    "digestError": "Error de simulación"
+    "digestError": "Error de simulación",
+    "ground": "Estadio"
   },
   "continueMenu": {
     "goToField": "Ir al Campo",
@@ -328,7 +329,9 @@
       "needOne": "Activa al menos una competición.",
       "summary": "{{regions}} regiones · {{competitions}} competiciones simuladas",
       "clubs": "{{clubs}} clubes en las regiones simuladas",
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "internationalFootball": "Fútbol internacional",
+      "internationalFootballHint": "Selecciones, sus convocatorias y el Mundial. Desactivado, la partida es solo de clubes y avanza más rápido."
     },
     "rail": {
       "label": "Países y ligas",
@@ -4730,5 +4733,53 @@
     "body": "Tu última sesión terminó con un fallo. Informar de ello nos ayuda a arreglarlo: verás todo lo que se enviaría antes de que nada salga de tu ordenador.",
     "report": "Informar",
     "notNow": "Ahora no"
+  },
+  "ground": {
+    "title": "Estadio",
+    "capacity": "Aforo",
+    "seats": "Asientos",
+    "standing": "De pie",
+    "executiveBoxes": "Palcos VIP",
+    "underCover": "Cubierto",
+    "restrictedView": "Visión reducida",
+    "atmosphere": "Ambiente",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Gradas",
+    "stand": "Grada",
+    "sections": "Sectores",
+    "tiersRows": "Anillos (filas)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Talud abierto",
+    "roof": "Techo",
+    "roofMixed": "Mixto",
+    "roofKind": {
+      "none": "Ninguno",
+      "posts": "Sobre pilares",
+      "goalpost": "De pórtico",
+      "pitched": "A dos aguas",
+      "cantilever": "Voladizo"
+    },
+    "groundRoof": {
+      "ring": "Techo sobre todo el estadio",
+      "arch": "Techo en arco sobre todo el estadio"
+    },
+    "retractable": "Retráctil",
+    "tierKind": {
+      "seated": "Sentado",
+      "rail": "Asientos abatibles",
+      "terrace": "Grada de pie"
+    },
+    "pitch": "Césped",
+    "surface": "Superficie",
+    "surfaceKind": {
+      "natural": "Césped natural",
+      "hybrid": "Césped híbrido",
+      "artificial": "Sintético"
+    },
+    "undersoilHeating": "Calefacción bajo el césped",
+    "growLights": "Lámparas de crecimiento",
+    "installed": "Instalada",
+    "notInstalled": "Ninguna"
   }
 }

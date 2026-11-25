@@ -199,7 +199,29 @@ describe("useTeamSelection simulation scope", () => {
       teamId: "team-1",
       activeRegionIds: ["asia", "europe", "south_america"],
       activeCompetitionIds: ["epl", "intl", "asia_cup"],
+      internationalFootball: true,
     });
+  });
+
+  /**
+   * Given a club chosen and the dialog applied with international football switched off
+   * When the career is started
+   * Then `select_team` is told to open a club-football-only career.
+   */
+  it("tells select_team when the career has no international football", async () => {
+    const { result } = await renderController();
+    act(() =>
+      result.current.applyScope({ ...result.current.scopeDraft, internationalFootball: false }),
+    );
+
+    await act(async () => {
+      await result.current.handleConfirm();
+    });
+
+    expect(invoke).toHaveBeenCalledWith(
+      "select_team",
+      expect.objectContaining({ internationalFootball: false }),
+    );
   });
 
   /**
@@ -220,6 +242,7 @@ describe("useTeamSelection simulation scope", () => {
       teamId: "team-1",
       activeRegionIds: ["europe", "south_america"],
       activeCompetitionIds: ["epl", "intl"],
+      internationalFootball: true,
     });
   });
 });
@@ -480,6 +503,7 @@ describe("useTeamSelection: Manage does not wait for the club's facts", () => {
       teamId: "team-1",
       activeRegionIds: ["asia", "europe", "south_america"],
       activeCompetitionIds: ["epl", "intl", "asia_cup"],
+      internationalFootball: true,
     });
   });
 });

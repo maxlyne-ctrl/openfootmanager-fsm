@@ -13,6 +13,8 @@ const FINISHED_FOLDERS = [
   // Contract tabs, and everything else under the folder. A file added there is checked from the
   // first commit.
   "./components/playerProfile/",
+  // The Ground screen, written to the rules from its first commit.
+  "./components/ground/",
   // The dashboard shell. The rest of components/dashboard (its modals) joins with them, and these
   // four entries become the one folder.
   "./components/dashboard/DashboardAlerts.tsx",

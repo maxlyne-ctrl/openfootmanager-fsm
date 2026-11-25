@@ -186,7 +186,8 @@
     "digestEventUserNews": "Notícias sobre o teu clube ou jogadores",
     "digestEventTransferWindow": "Abertura ou fecho da janela de transferências",
     "digestContinue": "Continuar a avançar",
-    "digestError": "Erro de simulação"
+    "digestError": "Erro de simulação",
+    "ground": "Estádio"
   },
   "continueMenu": {
     "goToField": "Ir para o Campo",
@@ -328,7 +329,9 @@
       "needOne": "Ativa pelo menos uma competição.",
       "summary": "{{regions}} regiões · {{competitions}} competições simuladas",
       "clubs": "{{clubs}} clubes nas regiões simuladas",
-      "apply": "Aplicar"
+      "apply": "Aplicar",
+      "internationalFootball": "Futebol internacional",
+      "internationalFootballHint": "Seleções, as suas convocatórias e o Mundial. Desligado, a carreira é só de clubes e avança mais depressa."
     },
     "rail": {
       "label": "Países e ligas",
@@ -4730,5 +4733,53 @@
     "body": "A tua última sessão terminou com uma falha. Reportá-la ajuda-nos a corrigi-la — vais ver tudo o que seria enviado antes de algo sair do teu computador.",
     "report": "Reportar",
     "notNow": "Agora não"
+  },
+  "ground": {
+    "title": "Estádio",
+    "capacity": "Lotação",
+    "seats": "Lugares sentados",
+    "standing": "Em pé",
+    "executiveBoxes": "Camarotes",
+    "underCover": "Coberto",
+    "restrictedView": "Visibilidade reduzida",
+    "atmosphere": "Ambiente",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Bancadas",
+    "stand": "Bancada",
+    "sections": "Setores",
+    "tiersRows": "Anéis (filas)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Talude aberto",
+    "roof": "Cobertura",
+    "roofMixed": "Mista",
+    "roofKind": {
+      "none": "Nenhuma",
+      "posts": "Sobre pilares",
+      "goalpost": "Em pórtico",
+      "pitched": "De duas águas",
+      "cantilever": "Em consola"
+    },
+    "groundRoof": {
+      "ring": "Cobertura sobre todo o estádio",
+      "arch": "Cobertura em arco sobre todo o estádio"
+    },
+    "retractable": "Retrátil",
+    "tierKind": {
+      "seated": "Sentados",
+      "rail": "Lugares rebatíveis",
+      "terrace": "Bancada de pé"
+    },
+    "pitch": "Relvado",
+    "surface": "Piso",
+    "surfaceKind": {
+      "natural": "Relva natural",
+      "hybrid": "Relva híbrida",
+      "artificial": "Sintético"
+    },
+    "undersoilHeating": "Aquecimento do relvado",
+    "growLights": "Lâmpadas de crescimento",
+    "installed": "Instalado",
+    "notInstalled": "Nenhum"
   }
 }

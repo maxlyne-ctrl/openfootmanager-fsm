@@ -103,7 +103,7 @@ pub(crate) fn section_profile(section: &Section) -> SectionProfile {
 }
 
 /// Everything the game reads off a ground.
-#[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize, ts_rs::TS)]
 #[serde(rename_all = "camelCase")]
 pub struct StadiumFigures {
     pub capacity: u32,

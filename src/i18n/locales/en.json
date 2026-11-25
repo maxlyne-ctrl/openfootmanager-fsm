@@ -186,7 +186,8 @@
     "digestEventUserNews": "News about your club or players",
     "digestEventTransferWindow": "Transfer window opening or deadline day",
     "digestContinue": "Keep Going",
-    "digestError": "Simulation error"
+    "digestError": "Simulation error",
+    "ground": "Ground"
   },
   "continueMenu": {
     "goToField": "Go to the Field",
@@ -328,7 +329,9 @@
       "needOne": "Switch on at least one competition.",
       "summary": "{{regions}} regions · {{competitions}} competitions simulated",
       "clubs": "{{clubs}} clubs in the simulated regions",
-      "apply": "Apply"
+      "apply": "Apply",
+      "internationalFootball": "International football",
+      "internationalFootballHint": "National teams, their call-ups and the World Cup. Off makes the career club football only, and quicker to play."
     },
     "rail": {
       "label": "Countries and leagues",
@@ -4730,5 +4733,53 @@
     "body": "Your last session ended in a crash. Reporting it helps us fix it — you will see everything that would be sent before anything leaves your computer.",
     "report": "Report it",
     "notNow": "Not now"
+  },
+  "ground": {
+    "title": "Ground",
+    "capacity": "Capacity",
+    "seats": "Seats",
+    "standing": "Standing",
+    "executiveBoxes": "Executive boxes",
+    "underCover": "Under cover",
+    "restrictedView": "Restricted view",
+    "atmosphere": "Atmosphere",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}}%)",
+    "stands": "Stands",
+    "stand": "Stand",
+    "sections": "Sections",
+    "tiersRows": "Tiers (rows)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Open bank",
+    "roof": "Roof",
+    "roofMixed": "Mixed",
+    "roofKind": {
+      "none": "None",
+      "posts": "On posts",
+      "goalpost": "Goalpost",
+      "pitched": "Pitched",
+      "cantilever": "Cantilever"
+    },
+    "groundRoof": {
+      "ring": "Roof over the whole ground",
+      "arch": "Arch roof over the whole ground"
+    },
+    "retractable": "Retractable",
+    "tierKind": {
+      "seated": "Seated",
+      "rail": "Rail seats",
+      "terrace": "Terrace"
+    },
+    "pitch": "Pitch",
+    "surface": "Surface",
+    "surfaceKind": {
+      "natural": "Natural grass",
+      "hybrid": "Hybrid grass",
+      "artificial": "Artificial"
+    },
+    "undersoilHeating": "Undersoil heating",
+    "growLights": "Grow lights",
+    "installed": "Installed",
+    "notInstalled": "None"
   }
 }

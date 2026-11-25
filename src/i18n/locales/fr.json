@@ -186,7 +186,8 @@
     "digestEventUserNews": "Des nouvelles de votre club ou de vos joueurs",
     "digestEventTransferWindow": "Ouverture ou clôture du mercato",
     "digestContinue": "Continuer l'avance",
-    "digestError": "Erreur de simulation"
+    "digestError": "Erreur de simulation",
+    "ground": "Stade"
   },
   "continueMenu": {
     "goToField": "Aller sur le Terrain",
@@ -328,7 +329,9 @@
       "needOne": "Activez au moins une compétition.",
       "summary": "{{regions}} régions · {{competitions}} compétitions simulées",
       "clubs": "{{clubs}} clubs dans les régions simulées",
-      "apply": "Appliquer"
+      "apply": "Appliquer",
+      "internationalFootball": "Football international",
+      "internationalFootballHint": "Les sélections, leurs convocations et la Coupe du monde. Désactivé, la carrière se limite aux clubs et avance plus vite."
     },
     "rail": {
       "label": "Pays et championnats",
@@ -4730,5 +4733,53 @@
     "body": "Votre dernière session s'est terminée par un plantage. Le signaler nous aide à le corriger — vous verrez tout ce qui serait envoyé avant que quoi que ce soit ne quitte votre ordinateur.",
     "report": "Le signaler",
     "notNow": "Pas maintenant"
+  },
+  "ground": {
+    "title": "Stade",
+    "capacity": "Capacité",
+    "seats": "Places assises",
+    "standing": "Debout",
+    "executiveBoxes": "Loges",
+    "underCover": "Couvert",
+    "restrictedView": "Visibilité réduite",
+    "atmosphere": "Ambiance",
+    "outOf100": "{{value}} / 100",
+    "shareOfCapacity": "{{count}} ({{percent}} %)",
+    "stands": "Tribunes",
+    "stand": "Tribune",
+    "sections": "Secteurs",
+    "tiersRows": "Niveaux (rangées)",
+    "tier": "{{kind}} {{rows}}",
+    "openBank": "Talus ouvert",
+    "roof": "Toit",
+    "roofMixed": "Mixte",
+    "roofKind": {
+      "none": "Aucun",
+      "posts": "Sur poteaux",
+      "goalpost": "En portique",
+      "pitched": "À deux pans",
+      "cantilever": "En porte-à-faux"
+    },
+    "groundRoof": {
+      "ring": "Toit sur tout le stade",
+      "arch": "Toit en arche sur tout le stade"
+    },
+    "retractable": "Rétractable",
+    "tierKind": {
+      "seated": "Assis",
+      "rail": "Sièges rabattables",
+      "terrace": "Gradin debout"
+    },
+    "pitch": "Pelouse",
+    "surface": "Revêtement",
+    "surfaceKind": {
+      "natural": "Gazon naturel",
+      "hybrid": "Gazon hybride",
+      "artificial": "Synthétique"
+    },
+    "undersoilHeating": "Chauffage de la pelouse",
+    "growLights": "Lampes de croissance",
+    "installed": "Installé",
+    "notInstalled": "Aucun"
   }
 }

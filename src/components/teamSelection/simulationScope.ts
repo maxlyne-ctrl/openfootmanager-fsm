@@ -18,14 +18,22 @@ export function competitionRequiredRegions(competition: LeagueData): string[] {
 
 /**
  * What the simulation dialog edits, as a draft until Apply: where the career starts, the regions the
- * player switched on, and each competition's remembered choice (a competition keeps its choice while
- * its region is off, and is simulated again when the region is back).
+ * player switched on, each competition's remembered choice (a competition keeps its choice while
+ * its region is off, and is simulated again when the region is back), and whether the career has
+ * international football at all.
  */
 export interface ScopeDraft {
   homeRegionId: string | null;
   homeCountryCode: string | null;
   regions: Record<string, boolean>;
   competitions: Record<string, boolean>;
+  /** Off opens a club-football-only career: no national teams, no national-team competitions. */
+  internationalFootball: boolean;
+}
+
+/** A competition national teams play, which a career without international football does not have. */
+export function isNationalTeamCompetition(competition: LeagueData): boolean {
+  return competition.kind === "InternationalNation";
 }
 
 /** Why a region cannot be switched off: the career starts in it, or one of the club's competitions needs it. */
@@ -85,8 +93,9 @@ export function competitionState(
     (regionId) => !active.has(regionId),
   );
   const blocked = missingRegionIds.length > 0;
+  const excluded = !draft.internationalFootball && isNationalTeamCompetition(competition);
   return {
-    on: !blocked && (yours || draft.competitions[competition.id] === true),
+    on: !blocked && !excluded && (yours || draft.competitions[competition.id] === true),
     yours,
     missingRegionIds,
     blocked,

@@ -264,6 +264,7 @@ pub fn run() {
             advance_time_with_mode,
             upgrade_facility,
             get_finance_snapshot,
+            get_ground,
             request_board_support,
             request_marketing_campaign,
             request_sponsor_pitch,
