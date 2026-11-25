@@ -141,7 +141,6 @@ fn settlement_window_start(game: &Game, today: NaiveDate) -> NaiveDate {
 /// with a result, and not paid yet, each once. Settling and forecasting share it, so the forecast
 /// can never count a gate payday would not pay, or miss one it would.
 fn due_fixtures(game: &Game, settled_from: NaiveDate, today: NaiveDate) -> Vec<&Fixture> {
-    let paid = paid_fixture_ids(game, settled_from);
     let mut seen = HashSet::new();
     // A rollover clears the fixtures of the edition it archives, so a gate that failed before it
     // is retried from the archive. An edition completed before the cutover, or before the previous
@@ -165,7 +164,7 @@ fn due_fixtures(game: &Game, settled_from: NaiveDate, today: NaiveDate) -> Vec<&
             fixture.status == FixtureStatus::Completed
                 && fixture.result.is_some()
                 && fixture_date(fixture).is_some_and(|date| date >= settled_from && date <= today)
-                && !paid.contains(fixture.id.as_str())
+                && !game.cash_journal.contains_post(&gate_post_id(&fixture.id))
                 && seen.insert(fixture.id.as_str())
         })
         .collect()
@@ -181,19 +180,6 @@ fn last_legacy_payday(game: &Game) -> Option<NaiveDate> {
         .max()
 }
 
-/// The fixtures already paid for among those played from `settled_from`. A gate is posted on its
-/// payday, never before its fixture, so a post dated before `settled_from` cannot have paid one of
-/// them. Skipping those keeps the set to the posts of the current window instead of every gate the
-/// world has paid since the save began, which grew a long career's days season by season.
-fn paid_fixture_ids(game: &Game, settled_from: NaiveDate) -> HashSet<&str> {
-    let since = settled_from.format("%Y-%m-%d").to_string();
-    game.cash_journal
-        .iter()
-        .filter(|post| post.kind == CashKind::Matchday && post.date >= since)
-        .filter_map(|post| post.id.strip_prefix(GATE_POST_PREFIX))
-        .collect()
-}
-
 fn home_fixtures<'a>(game: &'a Game, team_id: &'a str) -> impl Iterator<Item = &'a Fixture> {
     game.competitions_in_play()
         .iter()
@@ -202,7 +188,7 @@ fn home_fixtures<'a>(game: &'a Game, team_id: &'a str) -> impl Iterator<Item = &
 }
 
 fn fixture_date(fixture: &Fixture) -> Option<NaiveDate> {
-    NaiveDate::parse_from_str(&fixture.date, "%Y-%m-%d").ok()
+    domain::date::parse_iso_date(&fixture.date)
 }
 
 #[cfg(test)]

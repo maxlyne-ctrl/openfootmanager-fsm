@@ -17,7 +17,7 @@ pub fn age_between(born: NaiveDate, on: NaiveDate) -> i32 {
 /// The age on `on` of someone born on `date_of_birth` (`YYYY-MM-DD`), or `None` when the date
 /// cannot be read.
 pub fn age_on(on: NaiveDate, date_of_birth: &str) -> Option<i32> {
-    let born = NaiveDate::parse_from_str(date_of_birth, "%Y-%m-%d").ok()?;
+    let born = crate::date::parse_iso_date(date_of_birth)?;
     Some(age_between(born, on))
 }
 
