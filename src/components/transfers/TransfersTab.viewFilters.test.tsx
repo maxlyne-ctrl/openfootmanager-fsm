@@ -109,6 +109,31 @@ it("filters the offers through the backend", async () => {
 });
 
 /**
+ * Given the transfer centre
+ * When the user opens the Free Agents tab
+ * Then the backend is asked for the market's free agents, sorted best first, and the tab offers
+ *      no transfer, loan or budget chips, which mean nothing for a player without a club.
+ */
+it("has a tab of its own for free agents", async () => {
+  renderCentre();
+  expect(await screen.findByText("On Market")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: /free agents/i }));
+
+  await waitFor(() =>
+    expect(lastAsked()).toMatchObject({
+      scope: "market",
+      status: "free_agent",
+      sort_key: "ovr",
+      sort_asc: false,
+    }),
+  );
+  expect(screen.queryByRole("button", { name: /^Loan/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /^Transfer/ })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Within budget" })).not.toBeInTheDocument();
+});
+
+/**
  * Given a search typed on the market and another on the club's list
  * When the user moves between the views
  * Then each view finds its own search as it was left.
